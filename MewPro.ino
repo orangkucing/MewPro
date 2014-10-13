@@ -1,18 +1,63 @@
 // MewPro
-//   Confirmed to work with Arduino IDE 1.5.7 beta.
+//
+// The following are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
+//
+//   Arduino Pro Mini 328 3.3V 8MHz
+//   Arduino Pro 328 3.3V 8MHz
+//   Arduino Due
+//          w/ Arduino IDE 1.5.7 beta
+//          if you have troubles on compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note below)
+//
+//   Teensy 3.1
+//          To compile the code with Teensy 3.1:
+//          1. use Arduino IDE 1.0.6 and Teensyduino 1.20-rc5
+//          2. comment out all unused #include as //#include (see Note below)
+//
+//   (Note: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
+//    to compile unnecessary libraries.)
+//
+//   GR-KURUMI
+//          To compile the code with GR-KURUMI using Renesas web compiler http://www.renesas.com/products/promotion/gr/index.jsp#cloud :
+//          1. open a new project with the template GR-KURUMI_Sketch_V1.04.zip.
+//          2. create a folder named MewPro and upload all the files there.
+//          3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code (BEGIN / END lines should be excluded).
+/* BEGIN copy
+#include <RLduino78.h>
+
+#include "MewPro/MewPro.ino"
+#include "MewPro/a_Queue.ino"
+#include "MewPro/b_TimeAlarms.ino"
+#include "MewPro/c_I2C.ino"
+#include "MewPro/d_BacpacCommands.ino"
+#include "MewPro/e_Shutter.ino"
+#include "MewPro/f_Switch.ino"
+#include "MewPro/g_IRremote.ino"
+#include "MewPro/h_LightSensor.ino"
+#include "MewPro/i_PIRsensor.ino"
+#include "MewPro/j_VideoMotionDetect.ino"
+END copy */
 //
 //   Copyright (c) 2014 orangkucing
 
 #include <Arduino.h>
 
+// deal w/ interrupt pin numbers
+#if defined (__arm__) && defined (__SAM3X8E__) || defined(__MK20DX256__) // Arduino Due & Teensy 3.1
+#define INT_NUMBER_OFFSET 0
+#else
+#define INT_NUMBER_OFFSET (-2)
+#endif
+
 // Options:
-//   Choose either "#define" to use or "#undef". 
+//   Choose either "#define" to use or "#undef" not to use. 
 #undef  USE_TIME_ALARMS      // a_TimeAlarms: MewPro driven timelapse
-#define USE_SHUTTERS         // e_Shutters: One or two remote shutters without contact bounce or chatter
-#define USE_SWITCHES         // f_Switches: One or two mechanical switches
+#undef  USE_SHUTTERS         // e_Shutters: One or two remote shutters without contact bounce or chatter
+#undef  USE_SWITCHES         // f_Switches: One or two mechanical switches
 #undef  USE_IR_REMOTE        // g_IRremote: IR remote controller
 #undef  USE_LIGHT_SENSOR     // h_LightSensor: Ambient light sensor
 #undef  USE_PIR_SENSOR       // i_PIRsensor: Passive InfraRed motion sensor
+//   Video motion detect consumes almost all the dynamic memory. So if you want to use this then #undef all options above.
+#define USE_VIDEOMOTION      // j_VideoMotionDetect: Video Motion Detector
 
 // Arduino pins
 // Assignment of these pins (except 10-13/A0-A1 or I2C's SCL/SDA) can be re-configured here.
@@ -51,13 +96,14 @@ const int LIGHT_SENSOR_PIN = A7; // Analog only
 boolean lastHerobusState = LOW;  // Will be HIGH when camera attached.
 
 // function prototypes
-//   Arduino IDE doesn't need these prototypes but does Renesas Web Compiler http://www.renesas.com/products/promotion/gr/index.jsp#cloud )
+//   Arduino IDE doesn't need these prototypes but does Renesas Web Compiler
 void resetI2C(void);
 void setupShutter(void);
 void setupSwitch(void);
 void setupIRremote(void);
 void setupLightSensor(void);
 void setupPIRSensor(void);
+void resetVMD(void);
 void checkTimeAlarms(void);
 void checkBacpacCommands(void);
 void checkCameraCommands(void);
@@ -65,6 +111,7 @@ void checkSwitch(void);
 void checkIRremote(void);
 void checkLightSensor(void);
 void checkPIRSensor(void);
+void checkVMD(void);
 // end of function prototypes
 
 boolean ledState;
@@ -91,14 +138,17 @@ void setupLED()
 void ledOff()
 {
   // white
-  digitalWrite(LED_OUT_R, LOW);
-  digitalWrite(LED_OUT_G, LOW);
-  digitalWrite(LED_OUT_B, LOW);
+  pinMode(LED_OUT_R, INPUT);
+  pinMode(LED_OUT_G, INPUT);
+  pinMode(LED_OUT_B, INPUT);
   ledState = false;
 }
 
 void ledOn()
 {
+  pinMode(LED_OUT_R, OUTPUT);
+  pinMode(LED_OUT_G, OUTPUT);
+  pinMode(LED_OUT_B, OUTPUT);
   // green
   digitalWrite(LED_OUT_R, HIGH);
   digitalWrite(LED_OUT_G, LOW);
@@ -108,9 +158,6 @@ void ledOn()
 
 void setupLED()
 {
-  pinMode(LED_OUT_R, OUTPUT);
-  pinMode(LED_OUT_G, OUTPUT);
-  pinMode(LED_OUT_B, OUTPUT);
   ledOff();
 }
 #endif
@@ -122,7 +169,6 @@ void setup()
   // Set 57600 baud or slower.
   Serial.begin(57600);
   
-  resetI2C();  
   setupShutter();
   setupSwitch();
   setupIRremote();
@@ -132,6 +178,11 @@ void setup()
   setupLED(); // onboard LED setup 
   pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach. 
   pinMode(TRIG, OUTPUT); digitalWrite(TRIG, LOW);
+
+  // don't forget to switch pin configurations to INPUT.
+  pinMode(I2CINT, INPUT);  // Teensy: default disabled
+  pinMode(HBUSRDY, INPUT); // default: analog input
+  pinMode(PWRBTN, INPUT);  // default: analog input
 }
 
 void loop() 
@@ -141,6 +192,7 @@ void loop()
     if (lastHerobusState != HIGH) {
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
       lastHerobusState = HIGH;
+      resetI2C();
     }
   } else {
     if (lastHerobusState != LOW) {
@@ -156,4 +208,6 @@ void loop()
   checkIRremote();
   checkLightSensor();
   checkPIRSensor();
+  checkVMD();
 }
+

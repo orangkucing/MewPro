@@ -1,18 +1,22 @@
-#include <Wire.h>
-
+#if defined(__MK20DX256__) // Teensy 3.1
+//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ is not defined ***
+#else // Arduino Pro Mini
+#include <Wire.h> // *** please comment out this line if __MK20DX256__ is defined ***
+#define I2C_NOSTOP false
+#define I2C_STOP true
+#endif
 
 #define BUFFER_LENGTH     MEWPRO_BUFFER_LENGTH
 
-#if !defined(__arm__) || !defined(__SAM3X8E__) || defined(REL_GR_KURUMI) // all Arduinos but Due
-#define TWI_BUFFER_LENGTH MEWPRO_BUFFER_LENGTH
-#define TWI_FREQ          400000L
-#define WIRE              Wire
-#else // Arduino Due only
+#if defined (__arm__) && defined (__SAM3X8E__) // Arduino Due only
 // GoPro camera already has pull-up resistors on the I2C bus inside. 
 // Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors, too. 
 // Thus in order to avoid the conflict of resistors we must use non pull-up'ed D70 and D71 as SDA and SCL respectively,
 // and these correspond to Wire1 lib here.
 #define WIRE              Wire1
+#else
+#define TWI_BUFFER_LENGTH MEWPRO_BUFFER_LENGTH
+#define WIRE              Wire
 #endif
 
 // GoPro Dual Hero EEPROM IDs
@@ -41,16 +45,17 @@ int bufp = 1;
 volatile boolean recvq = false;
 
 // interrupt
+#ifdef __MK20DX256__
+void receiveHandler(size_t numBytes)
+#else
 void receiveHandler(int numBytes)
+#endif
 {
   int i = 0;
-  if (recvq) { // panic!! recv pending
-    return;
-  }
   while (WIRE.available()) {
     recv[i++] = WIRE.read();
+    recvq = true;
   }
-  recvq = true;
 }
 
 void requestHandler()
@@ -95,18 +100,17 @@ void SendBufToCamera() {
   Serial.print('<');
   __printBuf(buf);
   digitalWrite(I2CINT, LOW);
-  delayMicroseconds(1000);
+  delayMicroseconds(30);
   digitalWrite(I2CINT, HIGH);
 }
 
 void resetI2C()
 {
-#ifndef REL_GR_KURUMI
-  WIRE.setClock(400000L);
-#endif
   WIRE.begin(SMARTY);
   WIRE.onReceive(receiveHandler);
   WIRE.onRequest(requestHandler);
+
+  emptyQueue();
 }
 
 // Read I2C EEPROM
@@ -116,12 +120,15 @@ boolean isMaster()
   WIRE.begin();
   WIRE.beginTransmission(I2CEEPROM);
   WIRE.write((byte) 0);
-  WIRE.endTransmission(false);
+  WIRE.endTransmission(I2C_NOSTOP);
+#ifdef __MK20DX256__
+  WIRE.requestFrom(I2CEEPROM, 1, I2C_NOSTOP);
+#else
   WIRE.requestFrom(I2CEEPROM, 1);
+#endif
   if (WIRE.available()) {
     id = WIRE.read();
   }
-  WIRE.endTransmission(true);
 
   resetI2C();
   return (id == ID_MASTER);
@@ -171,7 +178,7 @@ void roleChange()
       }
       WIRE.write(d);
     }
-    WIRE.endTransmission(true);
+    WIRE.endTransmission(I2C_STOP);
     delayMicroseconds(WRITECYCLETIME);
   }
   pinMode(BPRDY, OUTPUT);
@@ -196,7 +203,7 @@ void checkCameraCommands()
         return;
       case '@':
         bufp = 1;
-        Serial.println("camera power on");
+        Serial.println(F("camera power on"));
         powerOn();
         while (inputAvailable()) {
           if (myRead() == '\n') {
@@ -206,7 +213,7 @@ void checkCameraCommands()
         return;
       case '!':
         bufp = 1;
-        Serial.println("role change");
+        Serial.println(F("role change"));
         roleChange();
         while (inputAvailable()) {
           if (myRead() == '\n') {

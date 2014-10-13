@@ -11,41 +11,48 @@
 //   #include <avr/pgmspace.h>
 //   #else
 // appeared in Documents/Arduino/libraries/Time/DateStrings.cpp
+
 #ifdef USE_TIME_ALARMS
 
-#include <Time.h>
-#include <TimeAlarms.h>
+//#include <Time.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
+//#include <TimeAlarms.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
 
 boolean setupTimeAlarmsIsCalled = false; // to avoid setupTimeAlarms() to be called twice.
 
+time_t alarmtime;
+
 void alarmPowerOn()
 {
+  alarmtime = now();
   queueIn("@"); // power on
+  Alarm.alarmOnce((hour(alarmtime)+1) % 24, 0, 0, alarmShutter);
 }
 
 void alarmShutter()
 {
   startRecording();
+  Alarm.alarmOnce((hour(starttime)+1) % 24, 0, 10, alarmSuspend);
 }
 
 void alarmSuspend()
 {
+  alarmtime = now();
   queueIn("PW0"); // SET_CAMERA_POWER_STATE off
+  if (minute(alarmtime) == 59) {
+    Alarm.alarmOnce((hour(alarmtime)+1) % 24, 59, 50, alarmPowerOn);
+  } else {
+    Alarm.alarmOnce(hour(alarmtime), 59, 50, alarmPowerOn);
+  }
 }
 
 void setupTimeAlarms()
-{
+{  
   if (!setupTimeAlarmsIsCalled) {
     setupTimeAlarmsIsCalled = true;
-    Serial.println("Time alarms set");
+    Serial.println(F("Time alarms set"));
     // Example of timelapse
     //   sixty-minutes intervals on the hour.
 /*
-    for (int hour = 0; hour < 24; hour++) {
-      Alarm.alarmRepeat(hour, 59, 50, alarmPowerOn);
-      Alarm.alarmRepeat(hour, 0, 0, alarmShutter);
-      Alarm.alarmRepeat(hour, 0, 10, alarmSuspend);
-    }
     alarmSuspend();
  */
   }

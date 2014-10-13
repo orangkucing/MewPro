@@ -3,7 +3,7 @@
 // (this works not only on Due but also on Pro Mini etc.)
 #ifdef USE_IR_REMOTE
 
-#include <IRremote2.h>
+//#include <IRremote2.h> // *** please comment out this line if USE_IR_REMOTE is not defined ***
 
 IRrecv irrecv(IRRECV_PIN);
 decode_results results;
@@ -36,7 +36,7 @@ void IRcommand()
     case 0xFFFFFFFF: // previous key repeated
       break;
     default: // unsupported controller key depressed
-      Serial.print("IR: ");
+      Serial.print(F("IR: "));
       Serial.println(results.value, HEX);
       break;
   }

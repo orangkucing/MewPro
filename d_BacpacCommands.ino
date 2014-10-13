@@ -1,34 +1,35 @@
 boolean powerOnAtCameraMode = false;
 
-const int GET_BACPAC_PROTOCOL_VERSION = 'v'*256 + 's';
-const int SET_BACPAC_SHUTTER_ACTION   = 'S'*256 + 'H';
-const int SET_BACPAC_3D_SYNC_READY    = 'S'*256 + 'R';
-const int SET_BACPAC_WIFI             = 'W'*256 + 'I'; // Defunct
-const int SET_BACPAC_FAULT            = 'F'*256 + 'N';
-const int SET_BACPAC_POWER_DOWN       = 'P'*256 + 'W';
-const int SET_BACPAC_SLAVE_SETTINGS   = 'X'*256 + 'S';
-const int SET_BACPAC_HEARTBEAT        = 'H'*256 + 'B';
+const int GET_BACPAC_PROTOCOL_VERSION = ('v' << 8) + 's';
+const int SET_BACPAC_SHUTTER_ACTION   = ('S' << 8) + 'H';
+const int SET_BACPAC_3D_SYNC_READY    = ('S' << 8) + 'R';
+const int SET_BACPAC_WIFI             = ('W' << 8) + 'I'; // Defunct
+const int SET_BACPAC_FAULT            = ('F' << 8) + 'N';
+const int SET_BACPAC_POWER_DOWN       = ('P' << 8) + 'W';
+const int SET_BACPAC_SLAVE_SETTINGS   = ('X' << 8) + 'S';
+const int SET_BACPAC_HEARTBEAT        = ('H' << 8) + 'B';
 
 void bacpacCommand()
 {
-  switch (recv[1]*256 + recv[2]) {
+  switch ((recv[1] << 8) + recv[2]) {
   case GET_BACPAC_PROTOCOL_VERSION:
     ledOff();
     buf[0] = 1; buf[1] = 1; // OK
     SendBufToCamera();
     delay(1000); // need some delay before I2C EEPROM read
     if (isMaster()) {
+      resetVMD();
       queueIn("VO1"); // SET_CAMERA_VIDEO_OUTPUT to herobus
     } else {
       queueIn("XS1");
     }
 #ifdef USE_TIME_ALARMS
     if (timeStatus() != timeSet) {
-      Serial.println("time not set");
+      Serial.println(F("time not set"));
       queueIn("td"); // Synchronize time with camera.
     } else {
       char buf[64];
-      Serial.println("time already set");
+      Serial.println(F("time already set"));
       sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d", year(), month(), day(), hour(), minute(), second());
       Serial.println(buf);
       setupTimeAlarms();
@@ -53,21 +54,21 @@ void bacpacCommand()
     }
     break;
   case SET_BACPAC_SLAVE_SETTINGS:
-    if (recv[9] == 0 && recv[10] == 0) {
+    if ((recv[9] << 8) + recv[10] == 0) {
       powerOnAtCameraMode = true;
     }
     // every second message will be off if we send "XS0" here
     queueIn("XS0");
     // battery level: 0-3 (4 if charging)
-    Serial.print(" batt_level:"); Serial.print(recv[4]);
+    Serial.print(F(" batt_level:")); Serial.print(recv[4]);
     // photos remaining
-    Serial.print(" remaining:"); Serial.print(recv[5] * 256 + recv[6]);
+    Serial.print(F(" remaining:")); Serial.print((recv[5] << 8) + recv[6]);
     // photos on microSD card
-    Serial.print(" photos:"); Serial.print(recv[7] * 256 + recv[8]);
+    Serial.print(F(" photos:")); Serial.print((recv[7] << 8) + recv[8]);
     // video time remaining (sec)
-    Serial.print(" seconds:"); Serial.print(recv[9] * 256 + recv[10]);
+    Serial.print(F(" seconds:")); Serial.print((recv[9] << 8) + recv[10]);
     // videos on microSD card
-    Serial.print(" videos:"); Serial.print(recv[11] * 256 + recv[12]);
+    Serial.print(F(" videos:")); Serial.print((recv[11] << 8) + recv[12]);
     {
       // maximum file size (4GB if FAT32, 0 means infinity if exFAT)
       // if one video file exceeds the limit then GoPro will divide it into smaller files automatically

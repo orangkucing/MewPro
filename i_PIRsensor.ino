@@ -31,7 +31,8 @@
 
 void setupPIRSensor()
 {
-  Serial.println("PIR sensor calibration start (10 seconds)");
+  pinMode(PIR_PIN, INPUT);
+  Serial.println(F("PIR sensor calibration start (10 seconds)"));
 }
 
 void checkPIRSensor()
@@ -53,8 +54,8 @@ void checkPIRSensor()
     if (lockLow){  
       //makes sure we wait for a transition to LOW before any further output is made:
       lockLow = false;            
-      Serial.println("---");
-      Serial.print("motion detected at ");
+      Serial.println(F("---"));
+      Serial.print(F("motion detected at "));
 #ifdef USE_TIME_ALARMS
       {
         time_t t = now();
@@ -64,7 +65,7 @@ void checkPIRSensor()
       }
 #else
       Serial.print(millis() / 1000);
-      Serial.println(" sec");
+      Serial.println(F(" sec"));
 #endif
       startRecording();
     }         
@@ -82,7 +83,7 @@ void checkPIRSensor()
       //makes sure this block of code is only executed again after 
       //a new motion sequence has been detected
       lockLow = true;                        
-      Serial.print("motion finished at ");      //output
+      Serial.print(F("motion finished at "));      //output
 #ifdef USE_TIME_ALARMS
       {
         time_t t = now() - pause;
@@ -92,7 +93,7 @@ void checkPIRSensor()
       }
 #else
       Serial.print(millis() / 1000 - pause);
-      Serial.println(" sec");
+      Serial.println(F(" sec"));
 #endif
       stopRecording();
     }

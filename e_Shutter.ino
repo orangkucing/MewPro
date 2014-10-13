@@ -25,7 +25,7 @@ void shutterHandler()
 void setupShutter()
 {
   pinMode(SHUTTER_PIN, INPUT_PULLUP);
-  attachInterrupt(SHUTTER_PIN, shutterHandler, CHANGE); 
+  attachInterrupt(SHUTTER_PIN + INT_NUMBER_OFFSET, shutterHandler, CHANGE); 
   pendingInterrupts = false;
 }
 
