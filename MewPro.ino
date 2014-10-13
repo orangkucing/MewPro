@@ -57,7 +57,7 @@ END copy */
 #undef  USE_LIGHT_SENSOR     // h_LightSensor: Ambient light sensor
 #undef  USE_PIR_SENSOR       // i_PIRsensor: Passive InfraRed motion sensor
 //   Video motion detect consumes almost all the dynamic memory. So if you want to use this then #undef all options above.
-#define USE_VIDEOMOTION      // j_VideoMotionDetect: Video Motion Detector
+#undef  USE_VIDEOMOTION      // j_VideoMotionDetect: Video Motion Detector
 
 // Arduino pins
 // Assignment of these pins (except 10-13/A0-A1 or I2C's SCL/SDA) can be re-configured here.
