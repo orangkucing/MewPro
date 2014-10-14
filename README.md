@@ -1,5 +1,5 @@
 #MewPro
-======
+
 Arduino BacPac™ for GoPro Hero 3+ Black: GoPro can be controlled by Arduino Pro Mini attached on Herobus.
 
 ------
