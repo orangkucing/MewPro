@@ -1,15 +1,11 @@
 ###MewPro
-======
 Arduino BacPac™ for GoPro Hero 3+ Black: GoPro can be controlled by Arduino Pro Mini attached on Herobus.
 
 
 ###How To Compile
-======
 The following microcontroller boards are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
 
-* Arduino Pro Mini 328 3.3V 8MHz and its clones
-* Arduino Pro 328 3.3V 8MHz
-* Arduino Due
+* Arduino Pro Mini 328 3.3V 8MHz
   - w/ Arduino IDE 1.5.7 beta
   - if you have troubles on compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note below)
 
@@ -27,7 +23,6 @@ The following microcontroller boards are known to work with MewPro at least core
   3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code (BEGIN / END lines should be excluded).
 
 ###Sensors
-======
 By default MewPro is configured to use the serial line for controlling GoPro. All the commands are listed at https://gist.github.com/orangkucing/45dd2046b871828bf592#file-gopro-i2ccommands-md . You can simply type a command string to the serial console followed by a return; for example,
 
 + `PW0` : shutdown GoPro
