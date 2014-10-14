@@ -1,6 +1,8 @@
-###MewPro
+#MewPro
+======
 Arduino BacPac™ for GoPro Hero 3+ Black: GoPro can be controlled by Arduino Pro Mini attached on Herobus.
 
+------
 
 ###How To Compile
 The following microcontroller boards are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
@@ -17,10 +19,10 @@ The following microcontroller boards are known to work with MewPro at least core
 (Note: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces to compile unnecessary libraries.)
 
 * GR-KURUMI
-  - To compile the code with GR-KURUMI using Renesas web compiler     http://www.renesas.com/products/promotion/gr/index.jsp#cloud :
+  - To compile the code with GR-KURUMI using (Renesas web compiler)[http://www.renesas.com/products/promotion/gr/index.jsp#cloud] :
   1. open a new project with the template GR-KURUMI_Sketch_V1.04.zip
   2. create a folder named MewPro and upload all the files there.
-  3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code.
+  3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code:
 ```
 #include <RLduino78.h>
 
@@ -37,6 +39,8 @@ The following microcontroller boards are known to work with MewPro at least core
 #include "MewPro/j_VideoMotionDetect.ino"
 ```
 
+------
+
 ###Serial Line Commands
 By default MewPro is configured to use the serial line for controlling GoPro. All the commands are listed at https://gist.github.com/orangkucing/45dd2046b871828bf592#file-gopro-i2ccommands-md . You can simply type a command string to the serial console followed by a return; for example,
 
@@ -51,6 +55,8 @@ Almost all listed commands that have a label named SET_CAMERA_xxx are usable. Mo
 + `!` : toggle the role of MewPro (slave -> master or master -> slave)
 
 Also the command `!` can be used to write the necessary bytes to onboard blank/new I²C EEPROM chip: In order to work as a fake Dual Hero Bacpac™, MewPro's I²C EEPROM must contain such info.
+
+------
 
 ###Sensors
 The code here includes examples to support various sensors:
