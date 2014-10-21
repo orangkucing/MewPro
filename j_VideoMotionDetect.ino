@@ -20,18 +20,7 @@
 //   D7 (AIN1) : Analog comparator negative input. (voltage to compare)
 //   D9 (PWM)  : Constant reference PWM voltage for brightness threshold.
 
-#if defined(__MK20DX256__) // Teensy 3.1
-
-// No library exists for Freescale MK20DX256 processor's 
-// built-in CMP module, so we need to do it in low level...
-#define CMP_SCR_DMAEN   ((uint8_t)0x40) // DMA Enable Control
-#define CMP_SCR_IER     ((uint8_t)0x10) // Comparator Interrupt Enable Rising
-#define CMP_SCR_IEF     ((uint8_t)0x08) // Comparator Interrupt Enable Falling
-#define CMP_SCR_CFR     ((uint8_t)0x04) // Analog Comparator Flag Rising
-#define CMP_SCR_CFF     ((uint8_t)0x02) // Analog Comparator Flag Falling
-#define CMP_SCR_COUT    ((uint8_t)0x01) // Analog Comparator Output
-
-#elif defined(REL_GR_KURUMI) // GR-KURUMI
+#if defined(REL_GR_KURUMI) // GR-KURUMI
 
 // Renesas RL78/G13 has 10 external interrupts (INTP0-INTP6, INTP8, INTP9, INTKR)
 // but GR-KURUMI made all of these pins unusable except
@@ -46,16 +35,17 @@
 // In order to use D4 as an interrupt pin we need to do it low level. (sigh..)
 // "How To Do It" documents about GR-KURUMI should be prepared...
 
-#else // Arduino Pro Mini
+#else // Arduino Pro Mini or Teensy 3.1
 
 // The part of code utilizes the following library. Please download and install.
-//   https://github.com/leomil72/analogComp
-//#include "analogComp.h" // *** please comment out this line if Teensy 3.1 or GR-KURUMI ***
+//   https://github.com/orangkucing/analogComp
+//#include "analogComp.h" // *** please comment out this line if GR-KURUMI ***
 
 #endif
 
 // Bulk motion detection:
 // volatile variables
+
 volatile uint16_t interlace;
 volatile uint16_t currentLine;
 volatile uint16_t lastHsyncTime;
@@ -91,11 +81,22 @@ const image_t differenceThreshold = 1000L; // CHANGE ME!!
 
 #else // Arduino Pro Mini
 
+#if F_CPU == 16000000
+const int SCANLINE_OFFSET = 110;
+const int MAX_SCANLINES = 70;
+typedef uint16_t image_t; // 1 word = 16 bits
+#define SIZE_OF_IMAGE_T 2
+// overclocked Arduino Pro Mini
+// GoPro needs 3.3V logic. Running 16MHz on ATmega 328P is not recommended at 3.3V.
+// (Note: ATmega 328P can run 20MHz but it is not supported by Arduino IDE)
+const int WORD_PER_LINE = 1; // 2^1 words = 32 bits
+#else // F_CPU == 8000000
 const int SCANLINE_OFFSET = 94;
 const int MAX_SCANLINES = 100;
 typedef uint16_t image_t; // 1 word = 16 bits
 #define SIZE_OF_IMAGE_T 2
 const int WORD_PER_LINE = 0; // 2^0 words = 16 bits
+#endif
 
 // set brightnessThreshold between 23: very sensitive and 77: not sensitive.
 const int brightnessThreshold = 50; // CHANGE ME!!
@@ -207,17 +208,16 @@ void HSyncHandler()
 
 #if defined(__MK20DX256__) // Teensy 3.1
 
-void cmp1_isr()
+void changeHandler()
 {
   uint16_t x;
  
   x = (uint16_t)micros() - lastHsyncTime;
 
-  CMP1_SCR |= CMP_SCR_CFR | CMP_SCR_CFF; // clear CFR and CFF
   // HSync period is 63.56μs and sync-to-blanking-end 9.48μs
   if (x <= 64 && x >= 10) {
     x -= 10;
-    if ((CMP1_SCR & CMP_SCR_COUT)) { // store 2 bit per interrupt
+    if ((CMP1_SCR & 1)) { // check CMP_SCR_COUT and store 2 bit per interrupt
       // INP > INM
       line[x >> 4] |= (image_t)1 << ((x & B1111) << 1);
     } else {
@@ -230,22 +230,12 @@ void cmp1_isr()
 void _resetCMP()
 {
   // prepare capturing video frames.
-  // set the reference analog voltage.
+  // set the ref8erence analog voltage.
   analogWriteResolution(12);
   analogWrite(A14, brightnessThreshold);
 
-  // set CMP1 interrupt vector before enabling CMP1
-  NVIC_SET_PRIORITY(IRQ_CMP1, 64); // 0 = highest priority, 255 = lowest
-  NVIC_ENABLE_IRQ(IRQ_CMP1); // handler is now cmp1_isr()
-  
-  // comparator settings  
-  SIM_SCGC4 |= SIM_SCGC4_CMP; // comparator clock set on. it is off by default for conserving power.
-  CORE_PIN23_CONFIG = PORT_PCR_MUX(0); // pin function set to comparator
-  CMP1_CR1 = 0; // set CMP1_CR1 to a known state
-  CMP1_CR0 = 0; // set CMP1_CR0 to a known state
-  CMP1_CR1   = B00000001; // enable comparator
-  CMP1_MUXCR = B00011000; // set comparator input PSEL=IN3 (DAC0_OUT) / MSEL=IN0 (D23)
-  CMP1_SCR   = CMP_SCR_IER | CMP_SCR_IEF; // set triggering edge to both rising and falling.
+  analogComparator1.setOn(3, 0); // set comparator input PSEL=IN3 (DAC0_OUT) / MSEL=IN0 (D23)
+  analogComparator1.enableInterrupt(changeHandler, CHANGE);
 }
 
 #elif defined(REL_GR_KURUMI) // GR-KURUMI
@@ -301,9 +291,19 @@ void changeHandler()
   // subtract the amount for sync-to-blanking-end 9.48μs.
   x -= 10;
 
-  // on 8MHz Arduinos micros() has a resolution of 8μs.
+  // on 8MHz/16MHz Arduinos micros() has a resolution of 8μs/4μs respectively.
   // actual brightness information Arduino Pro Mini 8MHz can capture from each scan line is only 5 (or 6) samples. 
-  x >>= 2; 
+  x >>= 2;
+#if F_CPU == 16000000 // overclocked Arduino Pro Mini
+  // store two bit per interrupt.
+  if ((ACSR & (1 << ACO))) {
+      // AIN+ > AIN-
+      line[x >> 3] |= (image_t)1 << ((x & B111) << 1);
+  } else {
+      // AIN+ > AIN-
+      line[x >> 3] |= (image_t)1 << (((x & B111) << 1) | 1);
+  }
+#else // F_CPU == 8000000
   // store two bit per interrupt.
   if ((ACSR & (1 << ACO))) {
     // AIN+ > AIN-
@@ -312,6 +312,7 @@ void changeHandler()
     // AIN+ < AIN-
     line[0] |= (1 << (x | 1));    // store B10
   }
+#endif
 }
 
 void _resetCMP()
