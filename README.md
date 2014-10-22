@@ -7,13 +7,13 @@ Arduino BacPac™ for GoPro Hero 3+ Black: GoPro can be controlled by Arduino Pr
 ###How To Compile
 The following microcontroller boards are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
 
-* Arduino Pro Mini 328 3.3V 8MHz
-  - w/ Arduino IDE 1.5.7 beta
+* Arduino Pro Mini 328 3.3V 8MHz (also overclocked version of 3.3V 16MHz)
+  - w/ Arduino IDE 1.5.7+
   - if you have troubles on compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note below)
 
-* Teensy 3.1
-  - To compile the code with Teensy 3.1:
-  1. use Arduino IDE 1.0.6 and Teensyduino 1.20-rc5
+* Teensy 3.x
+  - To compile the code with Teensy 3.x:
+  1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
   2. comment out all unused #include as //#include (see Note below)
 
 (Note: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces to compile unnecessary libraries.)
