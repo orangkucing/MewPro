@@ -9,9 +9,8 @@
 // D2 (INT0) : Vertical Sync = pin 3 of EL1883.
 // D3 (INT1) : Horizontal Sync = pin 7 of EL1883.
 // and
-// if Teensy 3.1
+// if Teensy 3.x
 //   A9/D23 (CMP1_IN0) : Analog comparator negative input. (voltage to compare)
-//   A14 (DAC) : Constant reference analog voltage for brightness threshold.
 // if GR-KURUMI (RL78/G13 has no built-in analog comparator)
 //   D4 : Input from external analog comparator
 //   D9 (PWM) : Constant reference PWM voltage for brightness threshold.
@@ -35,7 +34,7 @@
 // In order to use D4 as an interrupt pin we need to do it low level. (sigh..)
 // "How To Do It" documents about GR-KURUMI should be prepared...
 
-#else // Arduino Pro Mini or Teensy 3.1
+#else // Arduino Pro Mini or Teensy 3.x
 
 // The part of code utilizes the following library. Please download and install.
 //   https://github.com/orangkucing/analogComp
@@ -52,10 +51,10 @@ volatile uint16_t lastHsyncTime;
 volatile boolean nosignal = true;
 
 // Composite video signal:
-//   White level = 1.0V (77/255 or 1241/4095)
-//   Black level = 0.3V (23/255 or 372/4095)
+//   White level = 1.0V (77/255 or 19/63)
+//   Black level = 0.3V (23/255 or 5/63)
 
-#if defined(__MK20DX256__) // Teensy 3.1
+#if defined(__MK20DX256__) || defined(__MK20DX128__) // Teensy 3.x
 
 const int SCANLINE_OFFSET = 94;
 const int MAX_SCANLINES = 100;
@@ -63,8 +62,8 @@ typedef uint32_t image_t; // 1 word = 32 bits
 #define SIZE_OF_IMAGE_T 4
 const int WORD_PER_LINE = 2; // 2^2 words = 128 bits
 
-// set brightnessThreshold between 372: very sensitive and 1241: not sensitive.
-const int brightnessThreshold = 700; // CHANGE ME!!
+// set brightnessThreshold between 5: very sensitive and 19: not sensitive.
+const int brightnessThreshold = 10; // CHANGE ME!!
 const image_t differenceThreshold = 2000L; // CHANGE ME!!
 
 #elif defined(REL_GR_KURUMI) // GR-KURUMI
@@ -206,7 +205,7 @@ void HSyncHandler()
   memset((void *)line, 0, sizeof(line));
 }
 
-#if defined(__MK20DX256__) // Teensy 3.1
+#if defined(__MK20DX256__) || defined(__MK20DX128__) // Teensy 3.x
 
 void changeHandler()
 {
@@ -230,11 +229,10 @@ void changeHandler()
 void _resetCMP()
 {
   // prepare capturing video frames.
-  // set the ref8erence analog voltage.
-  analogWriteResolution(12);
-  analogWrite(A14, brightnessThreshold);
-
-  analogComparator1.setOn(3, 0); // set comparator input PSEL=IN3 (DAC0_OUT) / MSEL=IN0 (D23)
+  // we use 6bit DAC1 for INP.
+  analogComparator1.setOn(7, 0); // set comparator input PSEL=IN7 (6b DAC1 Reference) / MSEL=IN0 (D23)
+  // set the reference analog voltage.
+  CMP1_DACCR = B11000000 | brightnessThreshold; // enable 6b DAC1 and use VDD as reference
   analogComparator1.enableInterrupt(changeHandler, CHANGE);
 }
 

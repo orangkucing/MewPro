@@ -2,15 +2,15 @@
 //
 // The following are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
 //
-//   Arduino Pro Mini 328 3.3V 8MHz
+//   Arduino Pro Mini 328 3.3V 8MHz (also overclocked version of 3.3V 16MHz)
 //   Arduino Pro 328 3.3V 8MHz
 //   Arduino Due
-//          w/ Arduino IDE 1.5.7 beta
+//          w/ Arduino IDE 1.5.7+
 //          if you have troubles on compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note below)
 //
-//   Teensy 3.1
-//          To compile the code with Teensy 3.1:
-//          1. use Arduino IDE 1.0.6 and Teensyduino 1.20-rc5
+//   Teensy 3.x
+//          To compile the code with Teensy 3.x:
+//          1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
 //          2. comment out all unused #include as //#include (see Note below)
 //
 //   (Note: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
@@ -42,7 +42,7 @@ END copy */
 #include <Arduino.h>
 
 // deal w/ interrupt pin numbers
-#if defined (__arm__) && defined (__SAM3X8E__) || defined(__MK20DX256__) // Arduino Due & Teensy 3.1
+#if defined (__arm__) && defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) // Arduino Due & Teensy 3.x
 #define INT_NUMBER_OFFSET 0
 #else
 #define INT_NUMBER_OFFSET (-2)

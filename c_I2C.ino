@@ -1,7 +1,7 @@
-#if defined(__MK20DX256__) // Teensy 3.1
-//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ is not defined ***
+#if defined(__MK20DX256__) || defined(__MK20DX128__) // Teensy 3.x
+//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ are not defined ***
 #else // Arduino Pro Mini
-#include <Wire.h> // *** please comment out this line if __MK20DX256__ is defined ***
+#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
 #define I2C_NOSTOP false
 #define I2C_STOP true
 #endif
@@ -45,7 +45,7 @@ int bufp = 1;
 volatile boolean recvq = false;
 
 // interrupt
-#ifdef __MK20DX256__
+#if defined(__MK20DX256__) || defined(__MK20DX128__)
 void receiveHandler(size_t numBytes)
 #else
 void receiveHandler(int numBytes)
@@ -121,7 +121,7 @@ boolean isMaster()
   WIRE.beginTransmission(I2CEEPROM);
   WIRE.write((byte) 0);
   WIRE.endTransmission(I2C_NOSTOP);
-#ifdef __MK20DX256__
+#if defined(__MK20DX256__) || defined(__MK20DX128__)
   WIRE.requestFrom(I2CEEPROM, 1, I2C_NOSTOP);
 #else
   WIRE.requestFrom(I2CEEPROM, 1);
