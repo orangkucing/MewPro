@@ -1,14 +1,11 @@
-#if defined(__MK20DX256__) || defined(__MK20DX128__) // Teensy 3.x
-//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ are not defined ***
-#else // Arduino Pro Mini
-#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
+#if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
 #define I2C_NOSTOP false
 #define I2C_STOP true
 #endif
 
 #define BUFFER_LENGTH     MEWPRO_BUFFER_LENGTH
 
-#if defined (__arm__) && defined (__SAM3X8E__) // Arduino Due only
+#if defined (__SAM3X8E__) // Arduino Due only
 // GoPro camera already has pull-up resistors on the I2C bus inside. 
 // Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors, too. 
 // Thus in order to avoid the conflict of resistors we must use non pull-up'ed D70 and D71 as SDA and SCL respectively,

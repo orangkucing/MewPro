@@ -1,21 +1,6 @@
 // Timelapse photography driven by MewPro
-// Time and TimeAlarms are downloadable from
-//   http://www.pjrc.com/teensy/td_libs_Time.html
-//   and http://www.pjrc.com/teensy/td_libs_TimeAlarms.html
-// In order to compile the code on Pro Mini 328, find the following and edit the first line of them
-//   #if defined(__AVR__)
-//   #include <avr/pgmspace.h>
-//   #else
-// to
-//   #if defined(__AVR__) && !defined(__AVR_ATmega328P__)
-//   #include <avr/pgmspace.h>
-//   #else
-// appeared in Documents/Arduino/libraries/Time/DateStrings.cpp
 
 #ifdef USE_TIME_ALARMS
-
-//#include <Time.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
-//#include <TimeAlarms.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
 
 boolean setupTimeAlarmsIsCalled = false; // to avoid setupTimeAlarms() to be called twice.
 

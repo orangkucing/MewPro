@@ -1,9 +1,6 @@
 // IR remote controller
-// IRremote2 is downloadable from https://github.com/enternoescape/Arduino-IRremote-Due
-// (this works not only on Due but also on Pro Mini etc.)
-#ifdef USE_IR_REMOTE
 
-//#include <IRremote2.h> // *** please comment out this line if USE_IR_REMOTE is not defined ***
+#ifdef USE_IR_REMOTE
 
 IRrecv irrecv(IRRECV_PIN);
 decode_results results;
