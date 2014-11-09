@@ -1,20 +1,29 @@
 // MewPro
 //
-// The following are known to work with MewPro at least core functionalities. Not all the sensors, however, are supported by each of them.
+// The following small-factor micro processor boards are known to work with MewPro at least core functionalities and fit within the GoPro housing.
+// Not all the sensors, however, are supported by each of them.
 //
-//   Arduino Pro Mini 328 3.3V 8MHz
+//   Arduino Pro Mini 328 3.3V 8MHz (also overclocked version of 3.3V 16MHz)
 //          w/ Arduino IDE 1.5.7+
-//          if you have troubles on compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note below)
+//          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
+//
+//   Arduino Pro Micro - 3.3V 8MHz (5V 16MHz)
+//          w/ Arduino IDE 1.5.7+
+//          [POWER SUPPLY: 5V 16MHz version needs removal of the solder jumper on pads marked SJ1.]
+//          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
 //
 //   Teensy 3.x
+//          [POWER SUPPLY: The VIN-VUSB pad connection on the bottom side of Teensy 3.x needs to be cut.]
 //          To compile the code with Teensy 3.x:
 //          1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
-//          2. comment out all unused #include as //#include (see Note below)
+//          2. comment out all unused #include as //#include (see Note* below)
 //
-//   (Note: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
+//   (Note*: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
 //    to compile unnecessary libraries.)
 //
 //   GR-KURUMI
+//          [POWER SUPPLY: The dummy resistor soldered on JP1 of the MewPro board needs replacement w/ a general purpose diode of >100mA w/ dropoff voltage 1V
+//           (eg. Bourns S0180); Anode should be located on the Herobus side and Cathode on the Arduino side.]
 //          To compile the code with GR-KURUMI using Renesas web compiler http://www.renesas.com/products/promotion/gr/index.jsp#cloud :
 //          1. open a new project with the template GR-KURUMI_Sketch_V1.04.zip.
 //          2. create a folder named MewPro and upload all the files there.

@@ -14,43 +14,47 @@ const int SWITCH1_PIN      = 6;  // Software debounced; ON-start OFF-stop
 //                           8;  // (Arduino: Not in use; GR-KURUMI: Used by I2C SDA)
 const int PIR_PIN          = 9;  // Passive InfraRed motion sensor
 // BEGIN Don't change the following pin allocations. These are used to control Herobus. 
-const int I2CINT           = 10;
-const int TRIG             = 11;
-const int BPRDY            = 12; // Pulled up by camera
-//                           13; // built-in LED
-const int HBUSRDY          = A0;
-const int PWRBTN           = A1; // Pulled up by camera
+const int I2CINT           = 10; // (SS)
+const int TRIG             = 11; // (MOSI)
+const int BPRDY            = 12; // (MISO) Pulled up by camera
+//                           13; // (SCK) built-in LED
+const int HBUSRDY          = A0; // (14)
+const int PWRBTN           = A1; // (15) Pulled up by camera
 // END Don't change.
-//                           A2; // (Not in use)
-//                           A3; // (Not in use)
-//                           A4; // (Arduino: Used by I2C SDA; GR-KURUMI: Not in use)
-//                           A5; // (Arduino: Used by I2C SCL; GR-KURUMI: Not in use) 
-//                           A6; // Analog only (Not in use)
-const int LIGHT_SENSOR_PIN = A7; // Analog only
+//                           A2; // (16) (Not in use)
+//                           A3; // (17) (Not in use)
+//                           A4; // (18) (Arduino: Used by I2C SDA; GR-KURUMI: Not in use)
+//                           A5; // (19) (Arduino: Used by I2C SCL; GR-KURUMI: Not in use) 
+//                           A6; // (20) Analog only (Not in use)
+const int LIGHT_SENSOR_PIN = A7; // (21) Analog only
 //
-//    Arduino Pro Micro
+//    Arduino Pro Micro / Arduino Leonardo (3.3V)
 #elif defined(__AVR_ATmega32U4__)
-const int SHUTTER_PIN      = 0;  // Interrupt pin w/o software debounce
-//                           1;  // (Not in use)
-//                           2;  // (Used by I2C SDA)
-//                           3;  // (Used by I2C SCL)
-const int IRRECV_PIN       = 4;  // (24 | A6) IR remote controller
-const int SWITCH0_PIN      = 5;  // Software debounced; ON-start ON-stop
-const int SWITCH1_PIN      = 6;  // (25 | A7) Software debounced; ON-start OFF-stop
-//                           7;
-const int LIGHT_SENSOR_PIN = A8; // (26 | 8)
-const int PIR_PIN          = 9;  // (27 | A9) Passive InfraRed motion sensor
+const int SHUTTER_PIN      = 0;    // Interrupt pin w/o software debounce
+//                           1;    // (Not in use)
+//                           2;    // (Used by I2C SDA)
+//                           3;    // (Used by I2C SCL)
+const int IRRECV_PIN       = 4;    // (24 | A6) IR remote controller
+const int SWITCH0_PIN      = 5;    // Software debounced; ON-start ON-stop
+const int SWITCH1_PIN      = 6;    // (25 | A7) Software
+const int LIGHT_SENSOR_PIN = 8;    // (26 | A8)
+const int PIR_PIN          = 9;    // (27 | A9) Passive InfraRed motion sensor
 // BEGIN Don't change the following pin allocations. These are used to control Herobus. 
-const int I2CINT           = 10; // (28 | A10)
-const int TRIG             = 16; // (MOSI)
-const int BPRDY            = 14; // (MISO) Pulled up by camera
-//                           15; // (SCLK) (Not in use)
-//                           17; // (SS) RXLED
-const int HBUSRDY          = A0; // (18)
-const int PWRBTN           = A1; // (19) Pulled up by camera
+const int I2CINT           = 10;   // (28 | A10)
+//                           11;   //              (Arduino Pro Micro: No pin)
+//                           12;   // (29 | A11)   (Arduino Pro Micro: No pin)
+//                           13;   // built-in LED (Arduino Pro Micro: No pin, No LED)
+const int TRIG             = MOSI; // (16)
+const int BPRDY            = MISO; // (14) Pulled up by camera
+//                           SCK;  // (15) (Not in use)
+//                           SS;   // (17) RXLED   (Arduino Pro Micro: No pin)
+const int HBUSRDY          = A0;   // (18)
+const int PWRBTN           = A1;   // (19) Pulled up by camera
 // END Don't change.
-//                           A2; // (20) (Not in use)
-//                           A3; // (21) (Not in use)
+//                           A2;   // (20) (Not in use)
+//                           A3;   // (21) (Not in use)
+//                           A4;   // (22)         (Arduino Pro Micro: No pin)
+//                           A5;   // (23)         (Arduino Pro Micro: No pin)
 #else
 #error CPU not supported
 #endif

@@ -83,6 +83,10 @@ const int brightnessThreshold = 50; // CHANGE ME!!
 const image_t differenceThreshold = 1000L; // CHANGE ME!!
 #define VSYNC_PIN 2
 #define HSYNC_PIN 3
+// GR-KURUMI IDE doesn't define the following useful macro...
+#ifndef digitalPinToInterrupt
+#define digitalPinToInterrupt(p) (p - 2)
+#endif
 
 //****************************************************************
 //    Arduino Pro Mini            || Arduino Pro Micro
@@ -154,8 +158,8 @@ void motionDetected()
 
 void VSyncHandler()
 {
-	uint16_t i;
-	image_t d;
+  uint16_t i;
+  image_t d;
 	
   currentLine = 3; // VSync always occurs in line 4 (or 267) (base 1).
   
@@ -195,8 +199,8 @@ void VSyncHandler()
 #endif
   }
   if (interlace == 0) {
-      diff = tmpdiff;
-      tmpdiff = 0;
+    diff = tmpdiff;
+    tmpdiff = 0;
   }
 }
 
@@ -266,7 +270,7 @@ void changeHandler()
 
   // HSync period is 63.56μs and sync-to-blanking-end 9.48μs
   if (x <= 64 && x >= 10) {
-  	x -= 10;
+    x -= 10;
     // D4 = P31 (port 3, bit 1)
     if ((*((volatile uint8_t*)ADDR_PORT_REG + PORT_3) & B00000010)) { // store 2 bit per interrupt
       // INP > INM
@@ -315,11 +319,11 @@ void changeHandler()
 #if F_CPU == 16000000 // overclocked Arduino Pro Mini
   // store two bit per interrupt.
   if ((ACSR & (1 << ACO))) {
-      // AIN+ > AIN-
-      line[x >> 3] |= (image_t)1 << ((x & B111) << 1);
+    // AIN+ > AIN-
+    line[x >> 3] |= (image_t)1 << ((x & B111) << 1);
   } else {
-      // AIN+ > AIN-
-      line[x >> 3] |= (image_t)1 << (((x & B111) << 1) | 1);
+    // AIN+ > AIN-
+    line[x >> 3] |= (image_t)1 << (((x & B111) << 1) | 1);
   }
 #else // F_CPU == 8000000
   // store two bit per interrupt.
