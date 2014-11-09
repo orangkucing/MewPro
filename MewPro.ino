@@ -3,13 +3,12 @@
 // The following small-factor micro processor boards are known to work with MewPro at least core functionalities and fit within the GoPro housing.
 // Not all the sensors, however, are supported by each of them.
 //
-//   Arduino Pro Mini 328 3.3V 8MHz (also overclocked version of 3.3V 16MHz)
+//   Arduino Pro Mini 328 3.3V 8MHz
 //          w/ Arduino IDE 1.5.7+
 //          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
 //
-//   Arduino Pro Micro - 3.3V 8MHz (5V 16MHz)
+//   Arduino Pro Micro - 3.3V 8MHz
 //          w/ Arduino IDE 1.5.7+
-//          [POWER SUPPLY: 5V 16MHz version needs removal of the solder jumper on pads marked SJ1.]
 //          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
 //
 //   Teensy 3.x
