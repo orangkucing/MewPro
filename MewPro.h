@@ -37,6 +37,7 @@ const int SHUTTER_PIN      = 0;    // Interrupt pin w/o software debounce
 const int IRRECV_PIN       = 4;    // (24 | A6) IR remote controller
 const int SWITCH0_PIN      = 5;    // Software debounced; ON-start ON-stop
 const int SWITCH1_PIN      = 6;    // (25 | A7) Software
+//                           7;    // (Not in use)
 const int LIGHT_SENSOR_PIN = 8;    // (26 | A8)
 const int PIR_PIN          = 9;    // (27 | A9) Passive InfraRed motion sensor
 // BEGIN Don't change the following pin allocations. These are used to control Herobus. 
