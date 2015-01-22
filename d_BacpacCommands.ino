@@ -9,12 +9,15 @@ const int SET_BACPAC_POWER_DOWN       = ('P' << 8) + 'W';
 const int SET_BACPAC_SLAVE_SETTINGS   = ('X' << 8) + 'S';
 const int SET_BACPAC_HEARTBEAT        = ('H' << 8) + 'B';
 
+// what does this mean? i have no idea...
+unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+
 void bacpacCommand()
 {
   switch ((recv[1] << 8) + recv[2]) {
   case GET_BACPAC_PROTOCOL_VERSION:
     ledOff();
-    buf[0] = 1; buf[1] = 1; // OK
+    memcpy(buf, validationString, sizeof validationString);
     SendBufToCamera();
     delay(1000); // need some delay before I2C EEPROM read
     if (isMaster()) {
