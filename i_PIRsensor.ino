@@ -32,7 +32,7 @@
 void setupPIRSensor()
 {
   pinMode(PIR_PIN, INPUT);
-  Serial.println(F("PIR sensor calibration start (10 seconds)"));
+  __debug(F("PIR sensor calibration start (10 seconds)"));
 }
 
 void checkPIRSensor()
@@ -54,18 +54,20 @@ void checkPIRSensor()
     if (lockLow){  
       //makes sure we wait for a transition to LOW before any further output is made:
       lockLow = false;            
-      Serial.println(F("---"));
-      Serial.print(F("motion detected at "));
+      __debug(F("---"));
+      __debug(F("motion detected at "));
 #ifdef USE_TIME_ALARMS
-      {
+      if (debug) {
         time_t t = now();
         char s[20];
         sprintf(s, "%04d-%02d-%02d %02d:%02d:%02d", year(t), month(t), day(t), hour(t), minute(t), second(t));
         Serial.println(s);
       }
 #else
-      Serial.print(millis() / 1000);
-      Serial.println(F(" sec"));
+      if (debug) {
+        Serial.print(millis() / 1000);
+      }
+      __debug(F(" sec"));
 #endif
       startRecording();
     }         
@@ -83,17 +85,19 @@ void checkPIRSensor()
       //makes sure this block of code is only executed again after 
       //a new motion sequence has been detected
       lockLow = true;                        
-      Serial.print(F("motion finished at "));      //output
+      __debug(F("motion finished at "));      //output
 #ifdef USE_TIME_ALARMS
-      {
+      if (debug) {
         time_t t = now() - pause;
         char s[20];
         sprintf(s, "%04d-%02d-%02d %02d:%02d:%02d", year(t), month(t), day(t), hour(t), minute(t), second(t));
         Serial.println(s);
       }
 #else
-      Serial.print(millis() / 1000 - pause);
-      Serial.println(F(" sec"));
+      if (debug) {
+        Serial.print(millis() / 1000 - pause);
+      }
+      __debug(F(" sec"));
 #endif
       stopRecording();
     }

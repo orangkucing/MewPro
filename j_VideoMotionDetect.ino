@@ -139,7 +139,7 @@ unsigned long epoch;
 void motionEnd()
 {
   VMDstatus = 4;
-  Serial.println(F("stop"));
+  __debug(F("stop"));
   stopRecording();
   epoch = millis();
 }
@@ -148,7 +148,7 @@ void motionDetected()
 {
   if (!ledState) {
     VMDstatus = 3;
-    Serial.println(F("start"));
+    __debug(F("start"));
     startRecording();
   }
   epoch = millis();
@@ -373,12 +373,12 @@ void _resetVMD()
   _resetCMP(); // reset analog comparator
 
   VMDstatus = 2;
-  Serial.println(F("VMD start"));
+  __debug(F("VMD start"));
 }
 
 void resetVMD()
 {
-  Serial.println(F("VMD will start after 5 seconds."));
+  __debug(F("VMD will start after 5 seconds."));
   VMDstatus = 1;
   epoch = millis();
 }
@@ -414,21 +414,23 @@ void checkVMD()
     return;
   }
 
-#if 0  // Debug
+#if 0 // debug image
   for (int c = 0; c < MAX_SCANLINES; c++) {
     for (int i = 0; i < (1 << WORD_PER_LINE); i++) {
       for (int k = 0; k < SIZE_OF_IMAGE_T << 3; k++) {
         Serial.print((image[(c << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0) + (image[(c + MAX_SCANLINES << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0));
       }
     }
-    Serial.println();
+    Serial.println("");
   }
   Serial.println((uint16_t)diff);
   Serial.println(F("--------"));
 #else
   if (diff > differenceThreshold) { // Change Me!
-//    Serial.println((uint16_t)diff);
-    Serial.println(F("move"));
+//  if (debug) {
+//      Serial.println((uint16_t)diff);
+//  }
+    __debug(F("move"));
     motionDetected();
   }
 #endif

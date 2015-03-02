@@ -3,16 +3,15 @@
 #define I2C_STOP true
 #endif
 
-#define BUFFER_LENGTH     MEWPRO_BUFFER_LENGTH
-
 #if defined (__SAM3X8E__) // Arduino Due only
 // GoPro camera already has pull-up resistors on the I2C bus inside. 
-// Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors, too. 
+// Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors of 1k ohm, too. 
 // Thus in order to avoid the conflict of resistors we must use non pull-up'ed D70 and D71 as SDA and SCL respectively,
 // and these correspond to Wire1 lib here.
 #define WIRE              Wire1
 #else
-#define TWI_BUFFER_LENGTH MEWPRO_BUFFER_LENGTH
+// standard Wire library enables ATmega internal pull-ups by default. usually the resistors are 20k ohm or greater thus
+// these should cause no harm. 
 #define WIRE              Wire
 #endif
 
@@ -38,6 +37,7 @@ const int PAGESIZE = 8; // 24XX01, 24XX02
 // const int PAGESIZE = 16; // 24XX04, 24XX08, 24XX16
 
 byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
+
 int bufp = 1;
 volatile boolean recvq = false;
 
@@ -53,26 +53,34 @@ void receiveHandler(int numBytes)
     recv[i++] = WIRE.read();
     recvq = true;
   }
-}
-
-void requestHandler()
-{
-  if (strncmp((char *)buf, "\003SY", 3) == 0) {
-    if (buf[3] == 1) {
+  if (i == 4 && strncmp((char *)recv, "\203SR", 3) == 0) {
+    if (recv[3] == 1) {
       ledOn();
     } else {
       ledOff();
     }
   }
+}
+
+void requestHandler()
+{
+  digitalWrite(I2CINT, HIGH);
   WIRE.write(buf, (int) buf[0] + 1);
 }
 
 // print out debug information to Arduino serial console
+void __debug(const __FlashStringHelper *p)
+{
+  if (debug) {
+    Serial.println(p);
+  }
+}
+
 void __printBuf(byte *p)
 {
-  int len = p[0] & 0x7f;
+  int buflen = p[0] & 0x7f;
 
-  for (int i = 0; i <= len; i++) {
+  for (int i = 0; i <= buflen; i++) {
     if (i == 1 && isprint(p[1]) || i == 2 && p[1] != 0 && isprint(p[2])) {
       if (i == 1) {
         Serial.print(' ');
@@ -84,21 +92,24 @@ void __printBuf(byte *p)
       Serial.print(tmp);
     }
   }
-  Serial.println();
+  Serial.println("");
+  Serial.flush();
 }
 
 void _printInput()
 {
-  Serial.print('>');
-  __printBuf(recv);
+  if (debug) {
+    Serial.print('>');
+    __printBuf(recv);
+  }
 }
 
 void SendBufToCamera() {
-  Serial.print('<');
-  __printBuf(buf);
+  if (debug) {
+    Serial.print('<');
+    __printBuf(buf);
+  }
   digitalWrite(I2CINT, LOW);
-  delayMicroseconds(30);
-  digitalWrite(I2CINT, HIGH);
 }
 
 void resetI2C()
@@ -113,22 +124,19 @@ void resetI2C()
 // Read I2C EEPROM
 boolean isMaster()
 {
-  byte id;
-  WIRE.begin();
-  WIRE.beginTransmission(I2CEEPROM);
-  WIRE.write((byte) 0);
-  WIRE.endTransmission(I2C_NOSTOP);
-#if defined(__MK20DX256__) || defined(__MK20DX128__)
-  WIRE.requestFrom(I2CEEPROM, 1, I2C_NOSTOP);
-#else
-  WIRE.requestFrom(I2CEEPROM, 1);
-#endif
-  if (WIRE.available()) {
-    id = WIRE.read();
-  }
+  if (eepromId == 0) {
+    WIRE.begin();
+    WIRE.beginTransmission(I2CEEPROM);
+    WIRE.write((byte) 0);
+    WIRE.endTransmission(I2C_NOSTOP);
+    WIRE.requestFrom(I2CEEPROM, 1, I2C_STOP);
+    if (WIRE.available()) {
+      eepromId = WIRE.read();
+    }
 
-  resetI2C();
-  return (id == ID_MASTER);
+    resetI2C();
+  }
+  return (eepromId == ID_MASTER);
 }
 
 // SET_CAMERA_3D_SYNCHRONIZE START_RECORD
@@ -149,6 +157,7 @@ void powerOn()
   pinMode(PWRBTN, OUTPUT);
   digitalWrite(PWRBTN, LOW);
   delay(1000);
+//  tdDone = false;
   pinMode(PWRBTN, INPUT);
 }
 
@@ -170,8 +179,8 @@ void roleChange()
       switch ((a + i) % 4) {
         case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
         case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
-        case 2: d = 0; break;
-        case 3: d = 0; break;
+        case 2: d = 1; break;
+        case 3: d = (id == 4 ? 0x0a : 0x0b); break;
       }
       WIRE.write(d);
     }
@@ -179,6 +188,7 @@ void roleChange()
     delayMicroseconds(WRITECYCLETIME);
   }
   pinMode(BPRDY, OUTPUT);
+  eepromId = id;
   digitalWrite(BPRDY, LOW);
   resetI2C();
 }
@@ -191,6 +201,7 @@ void checkCameraCommands()
     switch (c) {
       case ' ':
         continue;
+      case '\r':
       case '\n':
         if (bufp != 1) {
           buf[0] = bufp - 1;
@@ -198,9 +209,19 @@ void checkCameraCommands()
           SendBufToCamera();
         }
         return;
+      case '&':
+        bufp = 1;
+        debug = !debug;
+        __debug(F("debug messages on"));
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;  
       case '@':
         bufp = 1;
-        Serial.println(F("camera power on"));
+        __debug(F("camera power on"));
         powerOn();
         while (inputAvailable()) {
           if (myRead() == '\n') {
@@ -210,7 +231,7 @@ void checkCameraCommands()
         return;
       case '!':
         bufp = 1;
-        Serial.println(F("role change"));
+        __debug(F("role change"));
         roleChange();
         while (inputAvailable()) {
           if (myRead() == '\n') {

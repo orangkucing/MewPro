@@ -16,7 +16,7 @@ void alarmPowerOn()
 void alarmShutter()
 {
   startRecording();
-  Alarm.alarmOnce((hour(starttime)+1) % 24, 0, 10, alarmSuspend);
+  Alarm.alarmOnce((hour(alarmtime)+1) % 24, 0, 10, alarmSuspend);
 }
 
 void alarmSuspend()
@@ -30,11 +30,15 @@ void alarmSuspend()
   }
 }
 
+void _setTime() {
+  setTime(td[TD_DATE_TIME_hour], td[TD_DATE_TIME_minute], td[TD_DATE_TIME_second], td[TD_DATE_TIME_day], td[TD_DATE_TIME_month], 2000+td[TD_DATE_TIME_year]);
+}
+
 void setupTimeAlarms()
-{  
+{
   if (!setupTimeAlarmsIsCalled) {
     setupTimeAlarmsIsCalled = true;
-    Serial.println(F("Time alarms set"));
+    __debug(F("Time alarms set"));
     // Example of timelapse
     //   sixty-minutes intervals on the hour.
 /*
@@ -49,6 +53,9 @@ void checkTimeAlarms()
 }
 
 #else
+
+void _setTime() {
+}
 
 void setupTimeAlarms()
 {

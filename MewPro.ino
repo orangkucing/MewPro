@@ -40,10 +40,17 @@
 #include "MewPro/h_LightSensor.ino"
 #include "MewPro/i_PIRsensor.ino"
 #include "MewPro/j_VideoMotionDetect.ino"
+#include "MewPro/k_Genlock.ino"
 END copy */
 //
 
-//   Copyright (c) 2014 orangkucing
+//   Copyright (c) 2014-2015 orangkucing
+
+#include <Arduino.h>
+#include "MewPro.h"
+
+// enable console output
+boolean debug = true;
 
 //////////////////////////////////////////////////////////
 // Options:
@@ -70,14 +77,25 @@ END copy */
 
 //********************************************************
 // c_I2C: I2C interface (THIS PART CAN'T BE OPTED OUT)
+// 
+// Note: in order to use MewPro reliably, THE FOLLOWING MODIFICATIONS TO STANDARD ARDUINO LIBRARY SOURCE IS
+// STRONGLY RECOMMENDED:
+//
+// Arduino Pro Mini / Arduino Pro Micro
+//     1. hardware/arduino/avr/libraries/Wire.h
+//            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
+//     2. hardware/arduino/avr/libraries/utility/twi.h
+//            old: #define TWI_BUFFER_LENGTH 32                    -->   new: #define TWI_BUFFER_LENGTH 64
+// Arduino Due
+//     hardware/arduino/sam/libraries/Wire/Wire.h
+//            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
+#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
 // Teensy 3.0 or Teensy 3.1
 //#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ are not defined ***
-// otherwise
-#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
 
 //********************************************************
-// e_Shutters: One or two remote shutters without contact bounce or chatter
-#undef  USE_SHUTTERS
+// e_Shutters: A remote shutters without contact bounce or chatter
+#undef  USE_SHUTTER
 
 //********************************************************
 // f_Switches: One or two mechanical switches
@@ -106,13 +124,15 @@ END copy */
 //   https://github.com/orangkucing/analogComp
 //#include "analogComp.h" // *** please comment out this line if USE_VIDEOMOTION is not defined or GR-KURUMI ***
 
+//********************************************************
+// k_Genlock: Generator Lock
+#undef  USE_GENLOCK
+
 // end of Options
 //////////////////////////////////////////////////////////
 
-#include <Arduino.h>
-#include "MewPro.h"
-
 boolean lastHerobusState = LOW;  // Will be HIGH when camera attached.
+int eepromId = 0;
 
 void setup() 
 {
@@ -126,10 +146,10 @@ void setup()
   setupIRremote();
   setupLightSensor();
   setupPIRSensor();
+  setupGenlock();
 
   setupLED(); // onboard LED setup 
   pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach. 
-  pinMode(TRIG, OUTPUT); digitalWrite(TRIG, LOW);
 
   // don't forget to switch pin configurations to INPUT.
   pinMode(I2CINT, INPUT);  // Teensy: default disabled
@@ -144,7 +164,11 @@ void loop()
     if (lastHerobusState != HIGH) {
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
       lastHerobusState = HIGH;
-      resetI2C();
+      if (eepromId == 0) {
+        isMaster(); // determine master/slave and resetI2C()
+      } else {
+        resetI2C();
+      }
     }
   } else {
     if (lastHerobusState != LOW) {
@@ -152,7 +176,6 @@ void loop()
       lastHerobusState = LOW;
     }
   }
-
   checkTimeAlarms();
   checkBacpacCommands();
   checkCameraCommands();

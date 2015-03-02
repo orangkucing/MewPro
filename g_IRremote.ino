@@ -33,8 +33,10 @@ void IRcommand()
     case 0xFFFFFFFF: // previous key repeated
       break;
     default: // unsupported controller key depressed
-      Serial.print(F("IR: "));
-      Serial.println(results.value, HEX);
+      __debug(F("IR: "));
+      if (debug) {
+        Serial.println(results.value, HEX);
+      }
       break;
   }
 }
