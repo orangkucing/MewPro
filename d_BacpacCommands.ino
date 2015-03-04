@@ -17,9 +17,6 @@ void emulateDetachBacpac()
 // what does this mean? i have no idea...
 unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-// what does this mean? i have no idea...
-unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
-
 void bacpacCommand()
 {
   int command = (recv[1] << 8) + recv[2];
