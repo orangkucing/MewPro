@@ -57,6 +57,10 @@ void bacpacCommand()
     return;
   case SET_BACPAC_POWER_DOWN: // PW
     tdDone = false;
+#ifdef USE_GENLOCK
+    Serial.println("PW0");
+    Serial.flush();
+#endif
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (recv[3]) {
@@ -117,6 +121,8 @@ void bacpacCommand()
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
     return;
+  default:
+    break;
   }
   // other commands are listed in tdtable[]
   for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
@@ -124,6 +130,20 @@ void bacpacCommand()
       td[offset] = recv[3];
       buf[0] = 2; buf[1] = 1; buf[2] = recv[3];
       SendBufToCamera();
+#ifdef USE_GENLOCK
+      if (isMaster()) {
+        // send received command to master dongle
+        Serial.print((char)recv[1]);
+        Serial.print((char)recv[2]);
+        {
+          char tmp[3];
+          sprintf(tmp, "%02X", recv[3]);
+          Serial.print(tmp);
+        }
+        Serial.println("");
+        Serial.flush();
+      }
+#endif      
       return;
     }
   }
@@ -167,7 +187,12 @@ void checkBacpacCommands()
             {
               // dummy setting: should be overridden soon
               char tmptd[TD_BUFFER_SIZE] = {
-              0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, 0x01,
+#define MODE_VIDEO 0x00
+#define MODE_PHOTO 0x01
+#define MODE_BURST 0x02
+#define MODE_TIMELAPSE 0x03
+#define MODE_DUAL 0x08
+              0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, MODE_PHOTO,
               0x05, 0xff, 0x03, 0x07, 0x00, 0x00, 0x02, 0x00, 0x02, 0x00,
               0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 
               0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, };
@@ -191,6 +216,15 @@ void checkBacpacCommands()
 #ifdef USE_GENLOCK
         if (isMaster()) {
           queueIn("FN0C"); // emulate slave ready
+          // send camera config to master dongle
+          Serial.print("TD");
+          for (int i = 3; i < TD_BUFFER_SIZE; i++) {
+            char tmp[3];
+            sprintf(tmp, "%02X", td[i]);
+            Serial.print(tmp);
+          }
+          Serial.println("");
+          Serial.flush();
         }
 #endif
       } else {

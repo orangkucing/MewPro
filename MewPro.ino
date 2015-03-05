@@ -126,6 +126,7 @@ boolean debug = true;
 
 //********************************************************
 // k_Genlock: Generator Lock
+//   Note: Master MewPro should always boolean debug = false;
 #undef  USE_GENLOCK
 
 // end of Options
