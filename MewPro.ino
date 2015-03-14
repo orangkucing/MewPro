@@ -90,6 +90,9 @@ boolean debug = true;
 //     hardware/arduino/sam/libraries/Wire/Wire.h
 //            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
 #include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
+#if BUFFER_LENGTH < 64
+#error Please modify Arduino Wire library source code to increase the I2C buffer size
+#endif
 // Teensy 3.0 or Teensy 3.1
 //#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ are not defined ***
 

@@ -16,6 +16,7 @@ void stopGenlock()
 
 void setupGenlock()
 {
+  powerOn();
 }
 
 #else

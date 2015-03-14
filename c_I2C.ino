@@ -1,3 +1,6 @@
+// MewPro firmware version string for maintenance
+#define MEWPRO_FIRMWARE_VERSION "2015031400"
+
 #if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
 #define I2C_NOSTOP false
 #define I2C_STOP true
@@ -238,6 +241,10 @@ void checkCameraCommands()
             return;
           }
         }
+        return;
+      case '/':
+        Serial.println(MEWPRO_FIRMWARE_VERSION);
+        Serial.flush();
         return;
       default:
         if (bufp >= 3 && isxdigit(c)) {

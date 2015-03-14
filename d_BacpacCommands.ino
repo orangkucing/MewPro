@@ -25,6 +25,12 @@ void bacpacCommand()
     ledOff();
     memcpy(buf, validationString, sizeof validationString);
     SendBufToCamera();
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("@");  // power on
+      Serial.flush();
+    }
+#endif
     delay(100); // need a short delay the validation string to be read by camera
     queueIn("cv");
     return;
@@ -58,8 +64,10 @@ void bacpacCommand()
   case SET_BACPAC_POWER_DOWN: // PW
     tdDone = false;
 #ifdef USE_GENLOCK
-    Serial.println("PW0");
-    Serial.flush();
+    if (1) { // send to Dongle
+      Serial.println(F("PW00"));
+      Serial.flush();
+    }
 #endif
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
@@ -112,6 +120,14 @@ void bacpacCommand()
     return;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      char tmp[5];
+      sprintf(tmp, "SH%02X", recv[3]);
+      Serial.println(tmp);
+      Serial.flush();
+    }
+#endif
     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = recv[3];
     SendBufToCamera();
     return;
