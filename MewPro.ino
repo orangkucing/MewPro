@@ -50,6 +50,7 @@ END copy */
 #include "MewPro.h"
 
 // enable console output
+// set false if this is MewPro #0 of dual dongle configuration
 boolean debug = true;
 
 //////////////////////////////////////////////////////////
@@ -129,7 +130,7 @@ boolean debug = true;
 
 //********************************************************
 // k_Genlock: Generator Lock
-//   Note: Master MewPro should always boolean debug = false;
+//   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
 #undef  USE_GENLOCK
 
 // end of Options

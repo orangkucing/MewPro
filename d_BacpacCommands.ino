@@ -27,6 +27,7 @@ void bacpacCommand()
     SendBufToCamera();
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
+      Serial.println("");
       Serial.println("@");  // power on
       Serial.flush();
     }
@@ -143,23 +144,15 @@ void bacpacCommand()
   // other commands are listed in tdtable[]
   for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
     if (tdtable[offset - 0x09] == command) {
+#ifdef USE_GENLOCK
+      buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
+      SendBufToCamera();
+      queueIn("td"); // let camera report setting in full
+#else
       td[offset] = recv[3];
       buf[0] = 2; buf[1] = 1; buf[2] = recv[3];
       SendBufToCamera();
-#ifdef USE_GENLOCK
-      if (isMaster()) {
-        // send received command to master dongle
-        Serial.print((char)recv[1]);
-        Serial.print((char)recv[2]);
-        {
-          char tmp[3];
-          sprintf(tmp, "%02X", recv[3]);
-          Serial.print(tmp);
-        }
-        Serial.println("");
-        Serial.flush();
-      }
-#endif      
+#endif
       return;
     }
   }
@@ -227,8 +220,6 @@ void checkBacpacCommands()
         // Packet length 0x27 does not exist but SMARTY_START
         memcpy((char *)td+1, recv, TD_BUFFER_SIZE-1);
         td[0] = TD_BUFFER_SIZE-1; td[1] = 'T'; td[2] = 'D'; // get ready to submit to slave
-        _setTime();
-        setupTimeAlarms();
 #ifdef USE_GENLOCK
         if (isMaster()) {
           queueIn("FN0C"); // emulate slave ready
@@ -242,6 +233,9 @@ void checkBacpacCommands()
           Serial.println("");
           Serial.flush();
         }
+#else
+        _setTime();
+        setupTimeAlarms();
 #endif
       } else {
         ; // do nothing
