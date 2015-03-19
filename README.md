@@ -82,3 +82,13 @@ The code here includes examples to support various sensors:
 + j_VideoMotionDetect.ino : Using Intersil Sync Separator EL1883 and a bulk motion detect algorithm.
 
 If you like to use these functions please refer the corresponding .ino files.
+
+------
+
+###Genlock Dongle
+MewPro is designed to work with Genlock Dongle [https://github.com/orangkucing/GenlockDongle]
+Please refer the repository for details.
+
+To use MewPro source code with Genlock Dongle, please #define USE_GENLOCK and set EEPROM (by using "!" command) as "master" for not only MewPro #0 but also MewPros #1, #2, #3, ...
+
+For MewPro #0 it must be set debug = false, and for other MewPros this setting does no harm. So you can always set debug = false if you use this source code with Genlock Dongle.
