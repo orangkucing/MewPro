@@ -1,7 +1,5 @@
 // bacpac commands
 //
-boolean powerOnAtCameraMode = false;
-
 void emulateDetachBacpac()
 {
   // to exit 3D mode, emulate detach and attach bacpac
@@ -15,7 +13,7 @@ void emulateDetachBacpac()
 }
 
 // what does this mean? i have no idea...
-unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+const unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 void bacpacCommand()
 {
@@ -77,17 +75,21 @@ void bacpacCommand()
       stopGenlock();
       break;
     case 1: // CAPTURE_START
-      if (powerOnAtCameraMode) { // powerOnAtCameraMode is always false when USE_GENLOCK
-        delay(500); // delay for LED light to be visible
-        ledOff();
-      } else {
-        startGenlock();
-      }
+      startGenlock();
       break;
     case 2: // CAPTURE_INTERMEDIATE (PES only)
+      break;
     case 3: // PES interim capture complete
-      stopGenlock();
-      ledOff();
+      switch (td[TD_MODE]) {
+      case MODE_VIDEO:
+      case MODE_BURST:
+      case MODE_PHOTO:
+        stopGenlock();
+        ledOff();
+        break;
+      default:
+        break;
+      }
       break;
     }
     return;
@@ -95,9 +97,6 @@ void bacpacCommand()
     return;
   case SET_BACPAC_SLAVE_SETTINGS: // XS
 #ifndef USE_GENLOCK
-    if ((recv[9] << 8) + recv[10] == 0) {
-      powerOnAtCameraMode = true;
-    }
     // every second message will be off if we send "XS0" here
     queueIn("XS0");
     if (debug) {
@@ -109,7 +108,11 @@ void bacpacCommand()
       // photos on microSD card
       Serial.print(F(" photos:")); Serial.print((recv[7] << 8) + recv[8]);
       // video time remaining (minutes)
-      Serial.print(F(" minutes:")); Serial.print((recv[9] << 8) + recv[10]);
+      if ((recv[9] << 8) + recv[10] == 0) { // GoPro firmware bug!
+        Serial.print(F(" minutes:")); Serial.print(F("unknown"));
+      } else {
+        Serial.print(F(" minutes:")); Serial.print((recv[9] << 8) + recv[10]);
+      }
       // videos on microSD card
       Serial.print(F(" videos:")); Serial.print((recv[11] << 8) + recv[12]);
       // maximum file size (4GB if FAT32, 0 means infinity if exFAT)
@@ -170,8 +173,8 @@ void checkBacpacCommands()
           if (isMaster()) {
             __debug(F("master bacpac and use genlock"));
 //            resetVMD();
-//            memcpy(buf, "\003VO\001", 4); // SET_CAMERA_VIDEO_OUTPUT to herobus
-//            SendBufToCamera();
+//            queueIn("VO1"); // SET_CAMERA_VIDEO_OUTPUT to herobus
+              userSettings();
           }
 #endif
           // td lets camera into 3D mode
@@ -190,17 +193,13 @@ void checkBacpacCommands()
             __debug(F("master bacpac and not use genlock"));
             resetVMD();
             queueIn("VO1"); // SET_CAMERA_VIDEO_OUTPUT to herobus
+            userSettings(); 
           } else {
 #ifdef USE_GENLOCK
-            __debug(F("slave bacpac and use genlock"));
+            __debug(F("slave bacpac and use genlock (not supported yet)"));
             {
               // dummy setting: should be overridden soon
-              char tmptd[TD_BUFFER_SIZE] = {
-#define MODE_VIDEO 0x00
-#define MODE_PHOTO 0x01
-#define MODE_BURST 0x02
-#define MODE_TIMELAPSE 0x03
-#define MODE_DUAL 0x08
+              const char tmptd[TD_BUFFER_SIZE] = {
               0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, MODE_PHOTO,
               0x05, 0xff, 0x03, 0x07, 0x00, 0x00, 0x02, 0x00, 0x02, 0x00,
               0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 
@@ -213,6 +212,7 @@ void checkBacpacCommands()
             __debug(F("slave bacpac and not use genlock"));
             queueIn("XS1");
 #endif
+            userSettings();
           }
         }
       } else if (recv[0] == 0x27) {

@@ -1,5 +1,5 @@
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015031400"
+#define MEWPRO_FIRMWARE_VERSION "2015042600"
 
 #if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
 #define I2C_NOSTOP false
@@ -55,12 +55,18 @@ void receiveHandler(int numBytes)
   while (WIRE.available()) {
     recv[i++] = WIRE.read();
     recvq = true;
+    waiting = false;
   }
   if (i == 4 && strncmp((char *)recv, "\203SR", 3) == 0) {
-    if (recv[3] == 1) {
+    switch (recv[3]) {
+    case 1:
       ledOn();
-    } else {
+      break;
+    case 0:
       ledOff();
+      break;
+    default:
+      break;
     }
   }
 }
@@ -108,6 +114,9 @@ void _printInput()
 }
 
 void SendBufToCamera() {
+  if ((int) buf[0] == 3) {
+    waiting = true; // don't read command from the queue until reply is received.
+  }
   if (debug) {
     Serial.print('<');
     __printBuf(buf);
@@ -160,7 +169,7 @@ void powerOn()
   pinMode(PWRBTN, OUTPUT);
   digitalWrite(PWRBTN, LOW);
   delay(1000);
-//  tdDone = false;
+  tdDone = false;
   pinMode(PWRBTN, INPUT);
 }
 

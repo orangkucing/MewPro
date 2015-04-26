@@ -83,9 +83,9 @@ boolean debug = true;
 // STRONGLY RECOMMENDED:
 //
 // Arduino Pro Mini / Arduino Pro Micro
-//     1. hardware/arduino/avr/libraries/Wire.h
+//     1. hardware/arduino/avr/libraries/Wire/Wire.h
 //            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
-//     2. hardware/arduino/avr/libraries/utility/twi.h
+//     2. hardware/arduino/avr/libraries/Wire/utility/twi.h
 //            old: #define TWI_BUFFER_LENGTH 32                    -->   new: #define TWI_BUFFER_LENGTH 64
 // Arduino Due
 //     hardware/arduino/sam/libraries/Wire/Wire.h
@@ -136,10 +136,21 @@ boolean debug = true;
 // end of Options
 //////////////////////////////////////////////////////////
 
+// if __AVR_ATmega32U4__ (Leonardo or Pro Micro) then use Serial1 (TTL) instead of Serial (USB) to communicate with genlock dongle
+#if defined(USE_GENLOCK) && defined(__AVR_ATmega32U4__)
+#define Serial Serial1
+#endif
+
 boolean lastHerobusState = LOW;  // Will be HIGH when camera attached.
 int eepromId = 0;
 
-void setup() 
+void userSettings()
+{
+  // This function is called once after camera boot.
+  // you can set put any camera commands here.
+}
+
+void setup()
 {
   // Remark. Arduino Pro Mini 328 3.3V 8MHz is too slow to catch up with the highest 115200 baud.
   //     cf. http://forum.arduino.cc/index.php?topic=54623.0
@@ -189,5 +200,6 @@ void loop()
   checkLightSensor();
   checkPIRSensor();
   checkVMD();
+  checkGenlock();
 }
 

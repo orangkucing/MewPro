@@ -3,8 +3,8 @@
 //
 //  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Arduino Pro Mini            || GR-KURUMI
 #if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI)
-//                           0;  // (Used by serial port)
-//                           1;  // (Used by serial port)
+//                           0;  // (Used by Serial port RXI)
+//                           1;  // (Used by Serial port TXO)
 const int SHUTTER_PIN      = 2;  // Interrupt pin w/o software debounce
 //                           3;  // (Not in use)
 const int IRRECV_PIN       = 4;  // IR remote controller
@@ -30,14 +30,14 @@ const int LIGHT_SENSOR_PIN = A7; // (21) Analog only
 //
 //    Arduino Pro Micro / Arduino Leonardo (3.3V)
 #elif defined(__AVR_ATmega32U4__)
-const int SHUTTER_PIN      = 0;    // Interrupt pin w/o software debounce
-//                           1;    // (Not in use)
+//                           0;    // (Used by Serial1 port RXI)
+//                           1;    // (Used by Serial1 port TXO)
 //                           2;    // (Used by I2C SDA)
 //                           3;    // (Used by I2C SCL)
 const int IRRECV_PIN       = 4;    // (24 | A6) IR remote controller
 const int SWITCH0_PIN      = 5;    // Software debounced; ON-start ON-stop
 const int SWITCH1_PIN      = 6;    // (25 | A7) Software debounced; ON-start OFF-stop
-//                           7;    // (Not in use)
+const int SHUTTER_PIN      = 7;    // Interrupt pin w/o software debounce
 const int LIGHT_SENSOR_PIN = 8;    // (26 | A8)
 const int PIR_PIN          = 9;    // (27 | A9) Passive InfraRed motion sensor
 // BEGIN Don't change the following pin allocations. These are used to control Herobus. 
@@ -104,7 +104,7 @@ const int TD_EXPOSURE                       = 0x0f;
 const short int SET_BACPAC_PHOTO_XSEC             = ('T' << 8) + 'I';
 const int TD_PHOTO_XSEC                     = 0x10;
 const short int SET_BACPAC_TIME_LAPSE             = ('T' << 8) + 'S';
-const int TD_TIME_LAPSE                     = 0x11; // (Defunct; always 0xff)
+const int TD_TIME_LAPSE                     = 0x11; // (Defunct; always 0)
 const short int SET_BACPAC_BEEP_SOUND             = ('B' << 8) + 'S';
 const int TD_BEEP_SOUND                     = 0x12;
 const short int SET_BACPAC_NTSC_PAL               = ('V' << 8) + 'M';
@@ -145,6 +145,12 @@ const short int SET_BACPAC_PROTUNE_SHARPNESS      = ('S' << 8) + 'P';
 const int TD_PROTUNE_SHARPNESS              = 0x27;
 const short int SET_BACPAC_PROTUNE_EXPOSURE_VALUE = ('E' << 8) + 'V';
 const int TD_PROTUNE_EXPOSURE_VALUE         = 0x28;
+
+#define MODE_VIDEO 0x00
+#define MODE_PHOTO 0x01
+#define MODE_BURST 0x02
+#define MODE_TIMELAPSE 0x03
+#define MODE_DUAL 0x08
 
 const short int tdtable[] = {
   SET_BACPAC_MODE, // 0x09
@@ -205,6 +211,7 @@ void checkIRremote(void);
 void checkLightSensor(void);
 void checkPIRSensor(void);
 void checkVMD(void);
+void checkGenlock(void);
 void startGenlock(void);
 void stopGenlock(void);
 // end of function prototypes
