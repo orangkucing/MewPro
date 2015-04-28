@@ -49,6 +49,7 @@ The following small-factor microcontroller boards are known to work with MewPro 
 #include "MewPro/h_LightSensor.ino"
 #include "MewPro/i_PIRsensor.ino"
 #include "MewPro/j_VideoMotionDetect.ino"
+#include "MewPro/k_Genlock.ino"
 ```
 
 ------
@@ -92,3 +93,12 @@ Please refer the repository for details.
 To use MewPro source code with Genlock Dongle, please #define USE_GENLOCK and set EEPROM (by using "!" command) as "master" for not only MewPro #0 but also MewPros #1, #2, #3, ...
 
 For MewPro #0 it must be set debug = false, and for other MewPros this setting does no harm. So you can always set debug = false if you use this source code with Genlock Dongle.
+
+------
+
+###Timelapse (non-genlock MewPro software)
+MewPro in non-genlock supports start/stop of GoPro's timelapse. However a misuse will cause firmware corruption of your GoPro and you'll need to reinsall the firmware. 
+
++ GoPro must be power-on in timelapse mode and interval must be set beforehand.
++ Interval must be greater than 2 seconds. (This is GoPro's limitation on Dual Hero System)
+
