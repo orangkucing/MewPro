@@ -1,5 +1,5 @@
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015042600"
+#define MEWPRO_FIRMWARE_VERSION "2015042800"
 
 #if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
 #define I2C_NOSTOP false
@@ -43,6 +43,7 @@ byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
 
 int bufp = 1;
 volatile boolean recvq = false;
+unsigned long previous_sync;  // last sync (used by timelapse mode)
 
 // interrupt
 #if defined(__MK20DX256__) || defined(__MK20DX128__)
@@ -57,7 +58,7 @@ void receiveHandler(int numBytes)
     recvq = true;
     waiting = false;
   }
-  if (i == 4 && strncmp((char *)recv, "\203SR", 3) == 0) {
+  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
     case 1:
       ledOn();
@@ -114,8 +115,27 @@ void _printInput()
 }
 
 void SendBufToCamera() {
-  if ((int) buf[0] == 3) {
-    waiting = true; // don't read command from the queue until reply is received.
+  // some command need to be executed in MewPro side before sending it to camera
+  int command = (buf[1] << 8) + buf[2];
+  switch (command) {
+  case SET_CAMERA_3D_SYNCHRONIZE:
+    cli();
+    waiting = true; // don't read command from the queue until a reply is received.
+    previous_sync = millis();
+    sei();
+    break;
+  case GET_CAMERA_INFO:
+  case GET_CAMERA_SETTING:
+    waiting = true; // don't read command from the queue until a reply is received.
+    break;
+  default:
+    for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
+      if (tdtable[offset - 0x09] == command) {
+        td[offset] = buf[3];
+        break;
+      }
+    }
+    break;
   }
   if (debug) {
     Serial.print('<');

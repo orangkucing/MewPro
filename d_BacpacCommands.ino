@@ -30,7 +30,7 @@ void bacpacCommand()
       Serial.flush();
     }
 #endif
-    delay(100); // need a short delay the validation string to be read by camera
+    delay(200); // need a short delay the validation string to be read by camera
     queueIn("cv");
     return;
   case SET_BACPAC_DELETE_ALL: // DA
@@ -75,9 +75,8 @@ void bacpacCommand()
       stopGenlock();
       break;
     case 1: // CAPTURE_START
-      startGenlock();
-      break;
     case 2: // CAPTURE_INTERMEDIATE (PES only)
+      startGenlock();
       break;
     case 3: // PES interim capture complete
       switch (td[TD_MODE]) {
@@ -144,21 +143,17 @@ void bacpacCommand()
   default:
     break;
   }
+#ifdef USE_GENLOCK
   // other commands are listed in tdtable[]
   for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
     if (tdtable[offset - 0x09] == command) {
-#ifdef USE_GENLOCK
       buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
       SendBufToCamera();
       queueIn("td"); // let camera report setting in full
-#else
-      td[offset] = recv[3];
-      buf[0] = 2; buf[1] = 1; buf[2] = recv[3];
-      SendBufToCamera();
-#endif
       return;
     }
   }
+#endif
 }
 
 void checkBacpacCommands()

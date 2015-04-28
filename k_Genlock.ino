@@ -35,8 +35,7 @@ void checkGenlock()
 
 #else
 
-unsigned long previous_shutter;
-unsigned long timelapse = 0;
+unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
 void startGenlock()
 {
@@ -51,11 +50,15 @@ void startGenlock()
     if (timelapse == 0) {
       timelapse = 500;
     }
+    timelapse -= 30; // margin
+    delay(10);
+    digitalWrite(TRIG, LOW);
+    delay(10);
+    digitalWrite(TRIG, HIGH);
     break;
   default:
     break;
   }
-  previous_shutter = millis();
 }
 
 void stopGenlock()
@@ -74,13 +77,13 @@ void setupGenlock()
 
 void checkGenlock()
 {
-  if (timelapse == 0) {
-    return;
-  }
-  if (!waiting && millis() - previous_shutter >= timelapse) {
+  cli();
+  unsigned long currentmillis = millis();
+  if (timelapse > 0 && !waiting && currentmillis - previous_sync >= timelapse) {
+    timelapse = 0;
     queueIn("SY2");
-    previous_shutter = millis();
   }
+  sei();
 }
 
 #endif
