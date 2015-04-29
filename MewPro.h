@@ -64,6 +64,7 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 const short int SET_CAMERA_3D_SYNCHRONIZE         = ('S' << 8) + 'Y';
 const short int GET_CAMERA_INFO                   = ('c' << 8) + 'v';
 const short int GET_CAMERA_SETTING                = ('t' << 8) + 'd';
+const short int SET_CAMERA_SETTING                = ('T' << 8) + 'D';
 const short int SET_CAMERA_VIDEO_OUTPUT           = ('V' << 8) + 'O';
 const short int SET_CAMERA_AUDIOINPUTMODE         = ('A' << 8) + 'I';
 const short int SET_CAMERA_USBMODE                = ('U' << 8) + 'M';

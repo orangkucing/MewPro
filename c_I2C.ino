@@ -125,6 +125,7 @@ void SendBufToCamera() {
     break;
   case GET_CAMERA_INFO:
   case GET_CAMERA_SETTING:
+  case SET_CAMERA_SETTING:
   case SET_CAMERA_VIDEO_OUTPUT:
   case SET_CAMERA_AUDIOINPUTMODE:
   case SET_CAMERA_USBMODE:
