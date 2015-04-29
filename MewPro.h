@@ -64,6 +64,10 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 const short int SET_CAMERA_3D_SYNCHRONIZE         = ('S' << 8) + 'Y';
 const short int GET_CAMERA_INFO                   = ('c' << 8) + 'v';
 const short int GET_CAMERA_SETTING                = ('t' << 8) + 'd';
+const short int SET_CAMERA_VIDEO_OUTPUT           = ('V' << 8) + 'O';
+const short int SET_CAMERA_AUDIOINPUTMODE         = ('A' << 8) + 'I';
+const short int SET_CAMERA_USBMODE                = ('U' << 8) + 'M';
+const short int SET_CAMERA_DATE_TIME              = ('T' << 8) + 'M';
 // commands not relating to TD SET_CAMERA_SETTING
 const short int GET_BACPAC_PROTOCOL_VERSION       = ('v' << 8) + 's';
 const short int SET_BACPAC_DELETE_ALL             = ('D' << 8) + 'A';

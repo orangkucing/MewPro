@@ -2,7 +2,7 @@
 
 byte queue[MEWPRO_BUFFER_LENGTH];
 volatile int queueb = 0, queuee = 0;
-volatile boolean waiting = false; // don't read the next command from the queue
+boolean waiting = false; // don't read the next command from the queue
 
 void emptyQueue()
 {

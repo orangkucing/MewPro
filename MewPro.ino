@@ -147,7 +147,9 @@ int eepromId = 0;
 void userSettings()
 {
   // This function is called once after camera boot.
-  // you can set put any camera commands here.
+  // you can set put any camera commands here. For example:
+  // queueIn("AI1");
+  // queueIn("TI5");
 }
 
 void setup()

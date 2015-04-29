@@ -159,6 +159,7 @@ void bacpacCommand()
 void checkBacpacCommands()
 {
   if (recvq) {
+    waiting = false;
     _printInput();
     if (!(recv[0] & 0x80)) {// information bytes
       if (recv[0] == 0x25) {

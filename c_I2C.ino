@@ -1,5 +1,5 @@
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015042800"
+#define MEWPRO_FIRMWARE_VERSION "2015042900"
 
 #if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
 #define I2C_NOSTOP false
@@ -56,7 +56,6 @@ void receiveHandler(int numBytes)
   while (WIRE.available()) {
     recv[i++] = WIRE.read();
     recvq = true;
-    waiting = false;
   }
   if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
@@ -126,12 +125,17 @@ void SendBufToCamera() {
     break;
   case GET_CAMERA_INFO:
   case GET_CAMERA_SETTING:
+  case SET_CAMERA_VIDEO_OUTPUT:
+  case SET_CAMERA_AUDIOINPUTMODE:
+  case SET_CAMERA_USBMODE:
+  case SET_CAMERA_DATE_TIME:
     waiting = true; // don't read command from the queue until a reply is received.
     break;
   default:
     for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
       if (tdtable[offset - 0x09] == command) {
         td[offset] = buf[3];
+        waiting = true;
         break;
       }
     }
