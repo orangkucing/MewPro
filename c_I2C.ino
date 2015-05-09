@@ -1,7 +1,4 @@
-// MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015042900"
-
-#if !defined(__MK20DX256__) && !defined(__MK20DX128__) // not Teensy 3.x
+#if !defined(__MK20DX256__) && !defined(__MK20DX128__) && !defined(__MKL26Z64__) // not Teensy 3.x/LC
 #define I2C_NOSTOP false
 #define I2C_STOP true
 #endif
@@ -45,8 +42,10 @@ int bufp = 1;
 volatile boolean recvq = false;
 unsigned long previous_sync;  // last sync (used by timelapse mode)
 
-// interrupt
-#if defined(__MK20DX256__) || defined(__MK20DX128__)
+#if !defined(__AVR_ATtiny1634__)
+// --------------------------------------------------------------------------------
+#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
+// interrupts
 void receiveHandler(size_t numBytes)
 #else
 void receiveHandler(int numBytes)
@@ -77,12 +76,209 @@ void requestHandler()
   WIRE.write(buf, (int) buf[0] + 1);
 }
 
+void resetI2C()
+{
+  WIRE.begin(SMARTY);
+  WIRE.onReceive(receiveHandler);
+  WIRE.onRequest(requestHandler);
+
+  emptyQueue();
+}
+
+// Read I2C EEPROM
+boolean isMaster()
+{
+  if (eepromId == 0) {
+    WIRE.begin();
+    WIRE.beginTransmission(I2CEEPROM);
+    WIRE.write((byte) 0);
+    WIRE.endTransmission(I2C_NOSTOP);
+    WIRE.requestFrom(I2CEEPROM, 1, I2C_STOP);
+    if (WIRE.available()) {
+      eepromId = WIRE.read();
+    }
+
+    resetI2C();
+  }
+  return (eepromId == ID_MASTER);
+}
+
+// Write I2C EEPROM
+void roleChange()
+{
+  byte id, d;
+  // emulate detouching bacpac by releasing BPRDY line
+  pinMode(BPRDY, INPUT);
+  delay(1000);
+
+  id = isMaster() ? ID_SLAVE : ID_MASTER;
+  
+  WIRE.begin();
+  for (unsigned int a = 0; a < 16; a += PAGESIZE) {
+    WIRE.beginTransmission(I2CEEPROM);
+    WIRE.write((byte) a);
+    for (int i = 0; i < PAGESIZE; i++) {
+      switch ((a + i) % 4) {
+        case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+        case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
+        case 2: d = 1; break;
+        case 3: d = (id == 4 ? 0x0a : 0x0b); break;
+      }
+      WIRE.write(d);
+    }
+    WIRE.endTransmission(I2C_STOP);
+    delayMicroseconds(WRITECYCLETIME);
+  }
+  pinMode(BPRDY, OUTPUT);
+  eepromId = id;
+  digitalWrite(BPRDY, LOW);
+  resetI2C();
+}
+
+// --------------------------------------------------------------------------------
+#else // __AVR_ATtiny1634__
+
+#define ROMSIZE 16
+#define EEPROMOFFSET 0
+
+volatile uint8_t wordAddr;
+volatile boolean repeatedStart;
+volatile boolean emulateRom;
+
+// interrupts
+boolean addressHandler(uint8_t slave, uint8_t count)
+{
+  emulateRom = ((slave >> 1) == I2CEEPROM);
+  repeatedStart = (count > 0 ? true : false);
+  if (emulateRom) {
+    // EEPROM access
+    if (repeatedStart && WIRE.available()) {
+      wordAddr = WIRE.read();
+    }
+  }
+  return true;
+}
+
+void receiveHandler(size_t numBytes)
+{ 
+  if (emulateRom) {
+    // EEPROM access (byte write: ignored)
+    return;
+  }
+  
+  // SMARTY
+  int i = 0;
+  while (WIRE.available()) {
+    recv[i++] = WIRE.read();
+    recvq = true;
+  }
+  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
+    switch (recv[3]) {
+    case 1:
+      ledOn();
+      break;
+    case 0:
+      ledOff();
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+void requestHandler()
+{
+  if (emulateRom) {
+    // EEPROM access
+    if (repeatedStart) {
+      // GoPro requests random read only
+      WIRE.write(EEPROM.read(wordAddr % ROMSIZE + EEPROMOFFSET));
+    }
+    return; 
+  }
+  
+  // SMARTY
+  digitalWrite(I2CINT, HIGH);
+  WIRE.write(buf, (int) buf[0] + 1);
+}
+
+void resetI2C()
+{
+  WIRE.begin(I2CEEPROM, ((SMARTY << 1) | 1));
+  WIRE.onAddrReceive(addressHandler);
+  WIRE.onReceive(receiveHandler);
+  WIRE.onRequest(requestHandler);
+
+  emptyQueue();
+}
+
+// Read I2C EEPROM
+void __romWrite(uint8_t id)
+{
+  byte d;
+  for (int a = 0; a < ROMSIZE; a++) {
+    switch (a % 4) {
+      case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+      case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
+      case 2: d = 1; break;
+      case 3: d = (id == 4 ? 0x0a : 0x0b); break;
+    }
+    EEPROM.write(a + EEPROMOFFSET, d);
+  }
+}
+
+boolean isMaster()
+{
+  if (eepromId == 0) {
+    eepromId = EEPROM.read(EEPROMOFFSET);
+    if (eepromId != ID_MASTER && eepromId != ID_SLAVE) {
+      __romWrite(ID_MASTER);
+      eepromId = ID_MASTER;
+    }
+    resetI2C();
+  }
+  return (eepromId == ID_MASTER);
+}
+
+// Write built-in EEPROM
+void roleChange()
+{
+  byte id, d;
+  // emulate detouching bacpac by releasing BPRDY line
+  pinMode(BPRDY, INPUT);
+  delay(1000);
+
+  id = isMaster() ? ID_SLAVE : ID_MASTER;
+  __romWrite(id);
+  pinMode(BPRDY, OUTPUT);
+  eepromId = id;
+  digitalWrite(BPRDY, LOW);
+}
+// --------------------------------------------------------------------------------
+#endif // __AVR_ATtiny1634
+
 // print out debug information to Arduino serial console
 void __debug(const __FlashStringHelper *p)
 {
   if (debug) {
     Serial.println(p);
   }
+}
+
+void printHex(uint8_t d, boolean upper)
+{
+  char t;
+  char a = upper ? 'A' : 'a';
+  t = d >> 4 | '0';
+  if (t > '9') {
+    t += a - '9' - 1;
+  }
+  Serial.print(t);
+  t = d & 0xF | '0';
+  if (t > '9') {
+    t += a - '9' - 1;
+  }
+  Serial.print(t);
 }
 
 void __printBuf(byte *p)
@@ -96,9 +292,8 @@ void __printBuf(byte *p)
       }
       Serial.print((char) p[i]);
     } else {
-      char tmp[4];
-      sprintf(tmp, " %02x", p[i]);
-      Serial.print(tmp);
+      Serial.print(' ');
+      printHex(p[i], false);
     }
   }
   Serial.println("");
@@ -134,7 +329,7 @@ void SendBufToCamera() {
     break;
   default:
     for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
-      if (tdtable[offset - 0x09] == command) {
+      if (pgm_read_word(tdtable + offset - 0x09) == command) {
         td[offset] = buf[3];
         waiting = true;
         break;
@@ -149,43 +344,16 @@ void SendBufToCamera() {
   digitalWrite(I2CINT, LOW);
 }
 
-void resetI2C()
-{
-  WIRE.begin(SMARTY);
-  WIRE.onReceive(receiveHandler);
-  WIRE.onRequest(requestHandler);
-
-  emptyQueue();
-}
-
-// Read I2C EEPROM
-boolean isMaster()
-{
-  if (eepromId == 0) {
-    WIRE.begin();
-    WIRE.beginTransmission(I2CEEPROM);
-    WIRE.write((byte) 0);
-    WIRE.endTransmission(I2C_NOSTOP);
-    WIRE.requestFrom(I2CEEPROM, 1, I2C_STOP);
-    if (WIRE.available()) {
-      eepromId = WIRE.read();
-    }
-
-    resetI2C();
-  }
-  return (eepromId == ID_MASTER);
-}
-
 // SET_CAMERA_3D_SYNCHRONIZE START_RECORD
 void startRecording()
 {
-  queueIn("SY1");
+  queueIn(F("SY1"));
 }
 
 // SET_CAMERA_3D_SYNCHRONIZE STOP_RECORD
 void stopRecording()
 {
-  queueIn("SY0");
+  queueIn(F("SY0"));
 }
 
 // Camera power On
@@ -198,37 +366,6 @@ void powerOn()
   pinMode(PWRBTN, INPUT);
 }
 
-// Write I2C EEPROM
-void roleChange()
-{
-  byte id, d;
-  // emulate detouching bacpac by releasing BPRDY line
-  pinMode(BPRDY, INPUT);
-  delay(1000);
-
-  id = isMaster() ? ID_SLAVE : ID_MASTER;
-  
-  WIRE.begin();
-  for (unsigned int a = 0; a < 16; a += PAGESIZE) {
-    WIRE.beginTransmission(I2CEEPROM);
-    WIRE.write((byte) a);
-    for (int i = 0; i < PAGESIZE; i++) {
-      switch ((a + i) % 4) {
-        case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
-        case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
-        case 2: d = 1; break;
-        case 3: d = (id == 4 ? 0x0a : 0x0b); break;
-      }
-      WIRE.write(d);
-    }
-    WIRE.endTransmission(I2C_STOP);
-    delayMicroseconds(WRITECYCLETIME);
-  }
-  pinMode(BPRDY, OUTPUT);
-  eepromId = id;
-  digitalWrite(BPRDY, LOW);
-  resetI2C();
-}
 
 void checkCameraCommands()
 {
@@ -277,7 +414,7 @@ void checkCameraCommands()
         }
         return;
       case '/':
-        Serial.println(MEWPRO_FIRMWARE_VERSION);
+        Serial.println(F(MEWPRO_FIRMWARE_VERSION));
         Serial.flush();
         return;
       default:

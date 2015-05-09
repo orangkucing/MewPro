@@ -57,8 +57,8 @@ volatile boolean nosignal = true;
 //   Black level = 0.3V (23/255 or 5/63)
 
 //****************************************************************
-//  Teensy 3.1             || Teensy 3.0
-#if defined(__MK20DX256__) || defined(__MK20DX128__)
+//  Teensy 3.1             || Teensy 3.0             || Teensy LC
+#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) 
 const int SCANLINE_OFFSET = 94;
 const int MAX_SCANLINES = 100;
 typedef uint32_t image_t; // 1 word = 32 bits
@@ -229,7 +229,7 @@ void HSyncHandler()
   memset((void *)line, 0, sizeof(line));
 }
 
-#if defined(__MK20DX256__) || defined(__MK20DX128__) // Teensy 3.x
+#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) // Teensy 3.x/LC
 
 void changeHandler()
 {

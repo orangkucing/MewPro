@@ -1,8 +1,8 @@
 // Arduino pins
 // Assignment of these pins (except 10-13/A0-A1 or I2C's SCL/SDA) can be re-configured here.
 //
-//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Arduino Pro Mini            || GR-KURUMI
-#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI)
+//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || GR-KURUMI
+#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI)
 //                           0;  // (Used by Serial port RXI)
 //                           1;  // (Used by Serial port TXO)
 const int SHUTTER_PIN      = 2;  // Interrupt pin w/o software debounce
@@ -56,6 +56,36 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 //                           A3;   // (21) (Not in use)
 //                           A4;   // (22)         (Arduino Pro Micro: No pin)
 //                           A5;   // (23)         (Arduino Pro Micro: No pin)
+//
+//    For ATtiny1634 core at https://github.com/SpenceKonde/arduino-tiny-841
+#elif defined(__AVR_ATtiny1634__)
+//                           0;    // ADC                  (Used by Serial port TXO)
+//                           1;    // ADC                  (Used by Serial port RXI)
+//                           2;    // ADC PWM
+//                           3;    // ADC PWM
+const int PWRBTN           = 4;    // ADC
+const int I2CINT           = 5;    // ADC
+//                           6;    // AIN1
+//                           7;    // AIN0
+//                           8;    // AREF
+//                                 // GND
+//                                 // VCC
+//                                 // (9)  XTAL1
+//                                 // (10) XTAL2
+//                                 // (17) RESET
+const int SHUTTER_PIN      = 11;   // ADC INT0             Interrupt pin w/o software debounce
+//                           12;   // ADC             SCK  (Used by I2C SCL)
+const int TRIG             = 13;   // ADC PWM
+const int BPRDY            = 14;   // ADC PWM
+const int HBUSRDY          = 15;   // ADC Serial1 TXO MISO
+//                           16;   // ADC Serial1 RXI MOSI (Used by I2C SDA)
+// the following are not supported
+const int IRRECV_PIN       = 2;    // IR remote controller
+const int SWITCH0_PIN      = 6;    // Software debounced; ON-start ON-stop
+const int SWITCH1_PIN      = 7;    // Software debounced; ON-start OFF-stop
+const int LIGHT_SENSOR_PIN = 8;    //
+const int PIR_PIN          = 3;    // Passive InfraRed motion sensor
+#define digitalPinToInterrupt(a) (0) // INT0
 #else
 #error CPU not supported
 #endif
@@ -161,7 +191,7 @@ const int TD_PROTUNE_EXPOSURE_VALUE         = 0x28;
 #define MODE_TIMELAPSE 0x03
 #define MODE_DUAL 0x08
 
-const short int tdtable[] = {
+const short int tdtable[] PROGMEM = {
   SET_BACPAC_MODE, // 0x09
   SET_BACPAC_PHOTO_RESOLUTION, // 0x0a
   SET_BACPAC_VIDEORESOLUTION, // 0x0b

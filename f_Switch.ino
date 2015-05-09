@@ -11,7 +11,6 @@
 
 void switchClosedCommand(int state)
 {
-
   switch (state) {
     case (1 << 0): // SWITCH0_PIN
       if (!ledState) {

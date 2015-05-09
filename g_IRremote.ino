@@ -15,7 +15,7 @@ void IRcommand()
     case 0xFD00FF: // power
       // surprisingly it is difficult to tell the camera is ON or OFF, so we just toggle.
       if (powerStatus) {
-        queueIn("PW0"); // SET_CAMERA_POWER_STATE off
+        queueIn(F("PW0")); // SET_CAMERA_POWER_STATE off
       } else {
         powerOn();
       }

@@ -13,7 +13,7 @@ void emulateDetachBacpac()
 }
 
 // what does this mean? i have no idea...
-const unsigned char validationString[19] = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
+const unsigned char validationString[19] PROGMEM = { 18, 0, 0, 3, 1, 0, 1, 0x3f, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 void bacpacCommand()
 {
@@ -21,17 +21,17 @@ void bacpacCommand()
   switch (command) {
   case GET_BACPAC_PROTOCOL_VERSION: // vs
     ledOff();
-    memcpy(buf, validationString, sizeof validationString);
+    memcpy_P(buf, validationString, sizeof validationString);
     SendBufToCamera();
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
       Serial.println("");
-      Serial.println("@");  // power on
+      Serial.println('@');  // power on
       Serial.flush();
     }
 #endif
     delay(200); // need a short delay the validation string to be read by camera
-    queueIn("cv");
+    queueIn(F("cv"));
     return;
   case SET_BACPAC_DELETE_ALL: // DA
     return;
@@ -41,7 +41,7 @@ void bacpacCommand()
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
     if (recv[3] == 0x0c) {
-//      queueIn("XS1");
+//      queueIn(F("XS1"));
     }
     return;
   case SET_BACPAC_HEARTBEAT: // HB
@@ -51,7 +51,7 @@ void bacpacCommand()
     if (isMaster()) {
 //         baterry:remaining:photos:seconds:videos:media:
 //         03      FFFF      0000   FFFF    0000   00    FFFFFF
-//      queueIn("XS0303FFFF0000FFFF000000FFFFFF"); // dummy
+//      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
       return;   
     }
 #endif
@@ -97,7 +97,7 @@ void bacpacCommand()
   case SET_BACPAC_SLAVE_SETTINGS: // XS
 #ifndef USE_GENLOCK
     // every second message will be off if we send "XS0" here
-    queueIn("XS0");
+    queueIn(F("XS0"));
     if (debug) {
       char tmp[13];
       // battery level: 0-3 (4 if charging)
@@ -116,8 +116,13 @@ void bacpacCommand()
       Serial.print(F(" videos:")); Serial.print((recv[11] << 8) + recv[12]);
       // maximum file size (4GB if FAT32, 0 means infinity if exFAT)
       // if one video file exceeds the limit then GoPro will divide it into smaller files automatically
-      sprintf(tmp, " %02xGB %02x%02x%02x", recv[13], recv[14], recv[15], recv[16]);
-      Serial.println(tmp);
+      Serial.print(' ');
+      printHex(recv[13], false);
+      Serial.print(F("GB "));
+      printHex(recv[14], false);
+      printHex(recv[15], false);
+      printHex(recv[16], false);
+      Serial.println("");
     }
  #endif
     return;
@@ -125,9 +130,9 @@ void bacpacCommand()
     // shutter button of master is pressed
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      char tmp[5];
-      sprintf(tmp, "SH%02X", recv[3]);
-      Serial.println(tmp);
+      Serial.print(F("SH"));
+      printHex(recv[3], true);
+      Serial.println("");
       Serial.flush();
     }
 #endif
@@ -146,15 +151,22 @@ void bacpacCommand()
 #ifdef USE_GENLOCK
   // other commands are listed in tdtable[]
   for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
-    if (tdtable[offset - 0x09] == command) {
+    if (pgm_read_word(tdtable + offset - 0x09) == command) {
       buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
       SendBufToCamera();
-      queueIn("td"); // let camera report setting in full
+      queueIn(F("td")); // let camera report setting in full
       return;
     }
   }
 #endif
 }
+
+// dummy setting: should be overridden soon
+const char tmptd[TD_BUFFER_SIZE] PROGMEM = {
+  0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, MODE_PHOTO,
+  0x05, 0xff, 0x03, 0x07, 0x00, 0x00, 0x02, 0x00, 0x02, 0x00,
+  0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, };
 
 void checkBacpacCommands()
 {
@@ -169,13 +181,13 @@ void checkBacpacCommands()
           if (isMaster()) {
             __debug(F("master bacpac and use genlock"));
 //            resetVMD();
-//            queueIn("VO1"); // SET_CAMERA_VIDEO_OUTPUT to herobus
+//            queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
               userSettings();
           }
 #endif
           // td lets camera into 3D mode
           // camera will send HBFF
-          queueIn("td");
+          queueIn(F("td"));
           // unless this is master and USE_GENLOCK, after receiving HBFF we are
           // going to emulate detach bacpac
         } else {
@@ -188,25 +200,17 @@ void checkBacpacCommands()
           if (isMaster()) {
             __debug(F("master bacpac and not use genlock"));
             resetVMD();
-            queueIn("VO1"); // SET_CAMERA_VIDEO_OUTPUT to herobus
+            queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
             userSettings(); 
           } else {
 #ifdef USE_GENLOCK
             __debug(F("slave bacpac and use genlock (not supported yet)"));
-            {
-              // dummy setting: should be overridden soon
-              const char tmptd[TD_BUFFER_SIZE] = {
-              0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, MODE_PHOTO,
-              0x05, 0xff, 0x03, 0x07, 0x00, 0x00, 0x02, 0x00, 0x02, 0x00,
-              0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 
-              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, };
-              memcpy(buf, tmptd, TD_BUFFER_SIZE);
-              memcpy(td, tmptd, TD_BUFFER_SIZE);
-            }
+            memcpy_P(buf, tmptd, TD_BUFFER_SIZE);
+            memcpy_P(td, tmptd, TD_BUFFER_SIZE);
             SendBufToCamera();
 #else
             __debug(F("slave bacpac and not use genlock"));
-            queueIn("XS1");
+            queueIn(F("XS1"));
 #endif
             userSettings();
           }
@@ -218,13 +222,11 @@ void checkBacpacCommands()
         td[0] = TD_BUFFER_SIZE-1; td[1] = 'T'; td[2] = 'D'; // get ready to submit to slave
 #ifdef USE_GENLOCK
         if (isMaster()) {
-          queueIn("FN0C"); // emulate slave ready
+          queueIn(F("FN0C")); // emulate slave ready
           // send camera config to master dongle
-          Serial.print("TD");
+          Serial.print(F("TD"));
           for (int i = 3; i < TD_BUFFER_SIZE; i++) {
-            char tmp[3];
-            sprintf(tmp, "%02X", td[i]);
-            Serial.print(tmp);
+            printHex(td[i], true);
           }
           Serial.println("");
           Serial.flush();

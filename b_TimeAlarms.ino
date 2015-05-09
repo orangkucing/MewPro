@@ -9,7 +9,7 @@ time_t alarmtime;
 void alarmPowerOn()
 {
   alarmtime = now();
-  queueIn("@"); // power on
+  queueIn(F("@")); // power on
   Alarm.alarmOnce((hour(alarmtime)+1) % 24, 0, 0, alarmShutter);
 }
 
@@ -22,7 +22,7 @@ void alarmShutter()
 void alarmSuspend()
 {
   alarmtime = now();
-  queueIn("PW0"); // SET_CAMERA_POWER_STATE off
+  queueIn(F("PW0")); // SET_CAMERA_POWER_STATE off
   if (minute(alarmtime) == 59) {
     Alarm.alarmOnce((hour(alarmtime)+1) % 24, 59, 50, alarmPowerOn);
   } else {

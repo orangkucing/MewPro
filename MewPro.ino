@@ -11,9 +11,9 @@
 //          w/ Arduino IDE 1.5.7+
 //          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
 //
-//   Teensy 3.x
-//          [POWER SUPPLY: The VIN-VUSB pad connection on the bottom side of Teensy 3.x needs to be cut.]
-//          To compile the code with Teensy 3.x:
+//   Teensy 3.x / Teensy LC
+//          [POWER SUPPLY: The VIN-VUSB pad connection on the bottom side of Teensy 3.x/LC needs to be cut.]
+//          To compile the code with Teensy 3.x/LC:
 //          1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
 //          2. comment out all unused #include as //#include (see Note* below)
 //
@@ -45,8 +45,13 @@ END copy */
 //
 
 //   Copyright (c) 2014-2015 orangkucing
+//
+// MewPro firmware version string for maintenance
+#define MEWPRO_FIRMWARE_VERSION "2015050900"
 
+//
 #include <Arduino.h>
+#include <EEPROM.h>
 #include "MewPro.h"
 
 // enable console output
@@ -90,12 +95,21 @@ boolean debug = true;
 // Arduino Due
 //     hardware/arduino/sam/libraries/Wire/Wire.h
 //            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
-#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ is defined ***
+#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ or __MKL26Z64__ or __AVR_ATtiny1634__ is defined ***
 #if BUFFER_LENGTH < 64
 #error Please modify Arduino Wire library source code to increase the I2C buffer size
 #endif
-// Teensy 3.0 or Teensy 3.1
-//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ are not defined ***
+//
+// Teensy 3.0 or 3.1 or LC
+//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ and __MKL26Z64__ are not defined ***
+//
+// ATtiny1634 core https://github.com/SpenceKonde/arduino-tiny-841
+//    WireS library is downloadable from https://github.com/orangkucing/WireS
+//    - In order to use F(" ") macro, hardware/arduino-tiny-841/avr/cores/tiny/{Print|WString}.{cpp|h} must
+//      be replaced by hardware/arduino/avr/cores/arduino/{Print|WString}.{cpp|h}
+//    - And hardware/arduino/avr/cores/arduino/Printable.h must be copied to
+//      hardware/arduino-tiny-841/avr/cores/tiny/Printable.h
+//#include <WireS.h> // *** please comment out this line if __AVR_ATtiny1634__ is not defined ***
 
 //********************************************************
 // e_Shutters: A remote shutters without contact bounce or chatter
