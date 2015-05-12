@@ -146,7 +146,7 @@ volatile boolean repeatedStart;
 volatile boolean emulateRom;
 
 // interrupts
-boolean addressHandler(uint8_t slave, uint8_t count)
+boolean addressHandler(uint16_t slave, uint8_t count)
 {
   emulateRom = ((slave >> 1) == I2CEEPROM);
   repeatedStart = (count > 0 ? true : false);
