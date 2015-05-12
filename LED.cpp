@@ -2,8 +2,8 @@
 
 boolean ledState;
 
-//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini
-#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) 
+//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || ATtiny1634
+#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATtiny1634__)
 const int LED_OUT          = 13; // Arduino onboard LED; HIGH (= ON) while recording
 
 void ledOff()
@@ -67,22 +67,6 @@ void ledOn()
   digitalWrite(LED_OUT_R, HIGH);
   digitalWrite(LED_OUT_G, LOW);
   digitalWrite(LED_OUT_B, HIGH);
-  ledState = true;
-}
-
-void setupLED()
-{
-  ledOff();
-}
-// ATtiny1634
-#elif defined(__AVR_ATtiny1634__)
-void ledOff()
-{
-  ledState = false;
-}
-
-void ledOn()
-{
   ledState = true;
 }
 

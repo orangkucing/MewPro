@@ -62,7 +62,7 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 //                           0;    // ADC                  (Used by Serial port TXO)
 //                           1;    // ADC                  (Used by Serial port RXI)
 //                           2;    // ADC PWM
-//                           3;    // ADC PWM
+const int TRIG             = 3;    // ADC PWM
 const int PWRBTN           = 4;    // ADC
 const int I2CINT           = 5;    // ADC
 //                           6;    // AIN1
@@ -75,7 +75,7 @@ const int I2CINT           = 5;    // ADC
 //                                 // (17) RESET
 const int SHUTTER_PIN      = 11;   // ADC INT0             Interrupt pin w/o software debounce
 //                           12;   // ADC             SCK  (Used by I2C SCL)
-const int TRIG             = 13;   // ADC PWM
+//                           13;   // ADC PWM              built-in LED (optional)
 const int BPRDY            = 14;   // ADC PWM
 const int HBUSRDY          = 15;   // ADC Serial1 TXO MISO
 //                           16;   // ADC Serial1 RXI MOSI (Used by I2C SDA)
@@ -84,7 +84,7 @@ const int IRRECV_PIN       = 2;    // IR remote controller
 const int SWITCH0_PIN      = 6;    // Software debounced; ON-start ON-stop
 const int SWITCH1_PIN      = 7;    // Software debounced; ON-start OFF-stop
 const int LIGHT_SENSOR_PIN = 8;    //
-const int PIR_PIN          = 3;    // Passive InfraRed motion sensor
+const int PIR_PIN          = 13;   // Passive InfraRed motion sensor
 #define digitalPinToInterrupt(a) (0) // INT0
 #else
 #error CPU not supported
