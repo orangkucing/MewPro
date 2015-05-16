@@ -61,10 +61,10 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 #elif defined(__AVR_ATtiny1634__)
 //                           0;    // ADC                  (Used by Serial port TXO)
 //                           1;    // ADC                  (Used by Serial port RXI)
-//                           2;    // ADC PWM
+const int I2CINT           = 2;    // ADC PWM
 const int TRIG             = 3;    // ADC PWM
 const int PWRBTN           = 4;    // ADC
-const int I2CINT           = 5;    // ADC
+const int HBUSRDY          = 5;    // ADC
 //                           6;    // AIN1
 //                           7;    // AIN0
 //                           8;    // AREF
@@ -76,8 +76,8 @@ const int I2CINT           = 5;    // ADC
 const int SHUTTER_PIN      = 11;   // ADC INT0             Interrupt pin w/o software debounce
 //                           12;   // ADC             SCK  (Used by I2C SCL)
 //                           13;   // ADC PWM              built-in LED (optional)
-const int BPRDY            = 14;   // ADC PWM
-const int HBUSRDY          = 15;   // ADC Serial1 TXO MISO
+//                           14;   // ADC PWM
+const int BPRDY            = 15;   // ADC Serial1 TXO MISO
 //                           16;   // ADC Serial1 RXI MOSI (Used by I2C SDA)
 // the following are not supported
 const int IRRECV_PIN       = 2;    // IR remote controller
