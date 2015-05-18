@@ -79,13 +79,13 @@ void setupGenlock()
 
 void checkGenlock()
 {
-  cli();
+  noInterrupts();
   unsigned long currentmillis = millis();
   if (timelapse > 0 && !waiting && currentmillis - previous_sync >= timelapse) {
     timelapse = 0;
     queueIn(F("SY2"));
   }
-  sei();
+  interrupts();
 }
 
 #endif

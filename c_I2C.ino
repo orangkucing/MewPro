@@ -22,6 +22,7 @@ const int ID_SLAVE  = 5;
 // I2C slave addresses
 const int I2CEEPROM = 0x50;
 const int SMARTY = 0x60;
+const int I2CPROXY = 0x70;
 
 // Camera accesses I2C EEPROM located at slave address 0x50 using 8-bit word address.
 // So any one of 3.3V EEPROMs 24XX00, 24XX01, 24XX02, 24XX04, 24XX08, or 24XX16 (XX = AA or LC) works with camera.
@@ -44,6 +45,7 @@ unsigned long previous_sync;  // last sync (used by timelapse mode)
 
 #if !defined(__AVR_ATtiny1634__)
 // --------------------------------------------------------------------------------
+#if !defined(USE_I2C_PROXY)
 #if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
 // interrupts
 void receiveHandler(size_t numBytes)
@@ -84,6 +86,47 @@ void resetI2C()
 
   emptyQueue();
 }
+
+#else // if defined(USE_I2C_PROXY)
+
+void receiveHandler()
+{
+  int datalen;
+  // since data length is variable and not yet known, read one byte first.
+  WIRE.requestFrom(I2CPROXY, 1, I2C_NOSTOP);
+  if (WIRE.available()) {
+    datalen = WIRE.read() & 0x7f;
+  } else {
+    // panic! error
+    datalen = -1;
+  }
+  // request again
+  WIRE.requestFrom(I2CPROXY, datalen + 1, I2C_STOP);
+  for (int i = 0; i <= datalen; i++) {
+    recv[i] = WIRE.read();
+    recvq = true;
+  }
+  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
+    switch (recv[3]) {
+    case 1:
+      ledOn();
+      break;
+    case 0:
+      ledOff();
+      break;
+    default:
+      break;
+    }
+  }
+}
+
+void resetI2C()
+{
+  WIRE.begin();
+  emptyQueue();
+}
+
+#endif
 
 // Read I2C EEPROM
 boolean isMaster()
@@ -137,6 +180,10 @@ void roleChange()
 
 // --------------------------------------------------------------------------------
 #else // __AVR_ATtiny1634__
+
+#ifdef USE_I2C_PROXY
+#error do not define USE_I2C_PROXY for the CPU cannot work as I2C master
+#endif
 
 #define ROMSIZE 16
 #define EEPROMOFFSET 0
@@ -313,10 +360,10 @@ void SendBufToCamera() {
   int command = (buf[1] << 8) + buf[2];
   switch (command) {
   case SET_CAMERA_3D_SYNCHRONIZE:
-    cli();
+    noInterrupts();
     waiting = true; // don't read command from the queue until a reply is received.
     previous_sync = millis();
-    sei();
+    interrupts();
     break;
   case GET_CAMERA_INFO:
   case GET_CAMERA_SETTING:
@@ -341,7 +388,13 @@ void SendBufToCamera() {
     Serial.print('<');
     __printBuf(buf);
   }
+#if !defined(USE_I2C_PROXY)
   digitalWrite(I2CINT, LOW);
+#else
+  WIRE.beginTransmission(I2CPROXY);
+  WIRE.write(buf, (int) buf[0] + 1);
+  WIRE.endTransmission(I2C_STOP);
+#endif
 }
 
 // SET_CAMERA_3D_SYNCHRONIZE START_RECORD

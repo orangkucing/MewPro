@@ -170,6 +170,11 @@ const char tmptd[TD_BUFFER_SIZE] PROGMEM = {
 
 void checkBacpacCommands()
 {
+#ifdef USE_I2C_PROXY
+  if (digitalRead(I2CINT) == LOW) {
+    receiveHandler();
+  }
+#endif
   if (recvq) {
     waiting = false;
     _printInput();

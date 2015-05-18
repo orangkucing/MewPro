@@ -1,8 +1,8 @@
 // Arduino pins
 // Assignment of these pins (except 10-13/A0-A1 or I2C's SCL/SDA) can be re-configured here.
 //
-//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || GR-KURUMI
-#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI)
+//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || GR-KURUMI              || Intel Edison
+#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI) || defined(__ARDUINO_X86__)
 //                           0;  // (Used by Serial port RXI)
 //                           1;  // (Used by Serial port TXO)
 const int SHUTTER_PIN      = 2;  // Interrupt pin w/o software debounce
@@ -58,7 +58,7 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 //                           A5;   // (23)         (Arduino Pro Micro: No pin)
 //
 //    For ATtiny1634 core at https://github.com/SpenceKonde/arduino-tiny-841
-#elif defined(__AVR_ATtiny1634__)
+#elif defined(__AVR_ATtiny1634__) // for MewPro Cable
 //                           0;    // ADC                  (Used by Serial port TXO)
 //                           1;    // ADC                  (Used by Serial port RXI)
 const int I2CINT           = 2;    // ADC PWM

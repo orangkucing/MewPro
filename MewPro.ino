@@ -20,6 +20,9 @@
 //   (Note*: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
 //    to compile unnecessary libraries.)
 //
+//   Intel Edison
+//          Since Intel Edison can not work as I2C slave, it requires an I2C proxy.
+//
 //   GR-KURUMI
 //          [POWER SUPPLY: The dummy resistor soldered on JP1 of the MewPro board needs replacement w/ a general purpose diode of >100mA w/ dropoff voltage 1V
 //           (eg. Bourns S0180); Anode should be located on the Herobus side and Cathode on the Arduino side.]
@@ -47,7 +50,7 @@ END copy */
 //   Copyright (c) 2014-2015 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015050900"
+#define MEWPRO_FIRMWARE_VERSION "2015051800"
 
 //
 #include <Arduino.h>
@@ -110,6 +113,8 @@ boolean debug = true;
 //    - And hardware/arduino/avr/cores/arduino/Printable.h must be copied to
 //      hardware/arduino-tiny-841/avr/cores/tiny/Printable.h
 //#include <WireS.h> // *** please comment out this line if __AVR_ATtiny1634__ is not defined ***
+
+#undef  USE_I2C_PROXY // define if using I2C proxy and this CPU acts as I2C master
 
 //********************************************************
 // e_Shutters: A remote shutters without contact bounce or chatter
@@ -194,7 +199,9 @@ void loop()
   // Attach or detach bacpac
   if (digitalRead(HBUSRDY) == HIGH) {
     if (lastHerobusState != HIGH) {
+#if !defined(USE_I2C_PROXY)
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
+#endif
       lastHerobusState = HIGH;
       if (eepromId == 0) {
         isMaster(); // determine master/slave and resetI2C()
