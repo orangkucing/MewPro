@@ -108,11 +108,6 @@ boolean debug = true;
 //
 // ATtiny1634 core https://github.com/SpenceKonde/arduino-tiny-841
 //    WireS library is downloadable from https://github.com/orangkucing/WireS
-//    - In order to use F(" ") macro, hardware/arduino-tiny-841/avr/cores/tiny/{Print|WString}.{cpp|h} must
-//      be replaced by hardware/arduino/avr/cores/arduino/{Print|WString}.{cpp|h}
-//    - And hardware/arduino/avr/cores/arduino/Printable.h must be copied to
-//      hardware/arduino-tiny-841/avr/cores/tiny/Printable.h
-//    - Please also refer this commit: https://github.com/orangkucing/WireS/commit/e5d0a80ebd1f0797fc750a10208918a6392a488a
 //#include <WireS.h> // *** please comment out this line if __AVR_ATtiny1634__ is not defined ***
 
 #undef  USE_I2C_PROXY // define if using I2C proxy and this CPU acts as I2C master
