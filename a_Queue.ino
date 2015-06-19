@@ -8,6 +8,7 @@ void emptyQueue()
 {
   queueb = queuee = 0;
   waiting = false;
+  Serial.flush(); // empty receive buffer
 }
 
 boolean inputAvailable()

@@ -80,11 +80,10 @@ void requestHandler()
 
 void resetI2C()
 {
+  emptyQueue();
   WIRE.begin(SMARTY);
   WIRE.onReceive(receiveHandler);
   WIRE.onRequest(requestHandler);
-
-  emptyQueue();
 }
 
 #else // if defined(USE_I2C_PROXY)
@@ -122,8 +121,8 @@ void receiveHandler()
 
 void resetI2C()
 {
-  WIRE.begin();
   emptyQueue();
+  WIRE.begin();
 }
 
 #endif
@@ -251,12 +250,12 @@ void requestHandler()
 
 void resetI2C()
 {
+  emptyQueue();
+  
   WIRE.begin(I2CEEPROM, ((SMARTY << 1) | 1));
   WIRE.onAddrReceive(addressHandler);
   WIRE.onReceive(receiveHandler);
   WIRE.onRequest(requestHandler);
-
-  emptyQueue();
 }
 
 // Read I2C EEPROM
