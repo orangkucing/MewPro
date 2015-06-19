@@ -148,6 +148,9 @@ boolean debug = true;
 //   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
 #undef  USE_GENLOCK
 
+// it is better to define this when RXI is connected to nothing (eg. MewPro #0 of Genlock system)
+#undef  UART_RECEIVER_DISABLE
+
 // end of Options
 //////////////////////////////////////////////////////////
 
@@ -173,7 +176,14 @@ void setup()
   //     cf. http://forum.arduino.cc/index.php?topic=54623.0
   // Set 57600 baud or slower.
   Serial.begin(57600);
-  
+#ifdef UART_RECEIVER_DISABLE
+#ifndef __AVR_ATmega32U4__
+  UCSR0B &= (~_BV(RXEN0));
+#else
+  UCSR1B &= (~_BV(RXEN1));
+#endif
+#endif
+
   setupShutter();
   setupSwitch();
   setupIRremote();
