@@ -359,6 +359,14 @@ void SendBufToCamera() {
   int command = (buf[1] << 8) + buf[2];
   switch (command) {
   case SET_CAMERA_3D_SYNCHRONIZE:
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.print(F("SH"));
+      printHex(buf[3], true);
+      Serial.println("");
+      Serial.flush();
+    }
+#endif
     noInterrupts();
     waiting = true; // don't read command from the queue until a reply is received.
     previous_sync = millis();
