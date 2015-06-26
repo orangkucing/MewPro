@@ -372,12 +372,22 @@ void SendBufToCamera() {
     previous_sync = millis();
     interrupts();
     break;
+  case SET_CAMERA_USBMODE:
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.print(F("UM"));  // Warn: UM is sent to Dongle but Dongle should not send it to Bacpac.
+      printHex(buf[3], true);
+      Serial.println("");
+      Serial.flush();
+    }
+#endif
+    waiting = true;
+    break;
   case GET_CAMERA_INFO:
   case GET_CAMERA_SETTING:
   case SET_CAMERA_SETTING:
   case SET_CAMERA_VIDEO_OUTPUT:
   case SET_CAMERA_AUDIOINPUTMODE:
-  case SET_CAMERA_USBMODE:
   case SET_CAMERA_DATE_TIME:
     waiting = true; // don't read command from the queue until a reply is received.
     break;
