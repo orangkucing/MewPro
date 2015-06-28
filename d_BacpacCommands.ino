@@ -21,8 +21,6 @@ void bacpacCommand()
   switch (command) {
   case GET_BACPAC_PROTOCOL_VERSION: // vs
     ledOff();
-    memcpy_P(buf, validationString, sizeof validationString);
-    SendBufToCamera();
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
       Serial.println("");
@@ -30,6 +28,11 @@ void bacpacCommand()
       Serial.flush();
     }
 #endif
+    while (digitalRead(I2CINT) != HIGH) { // wait until camera pullups I2CINT
+      ;
+    }
+    memcpy_P(buf, validationString, sizeof validationString);
+    SendBufToCamera();
     delay(200); // need a short delay the validation string to be read by camera
     queueIn(F("cv"));
     return;
