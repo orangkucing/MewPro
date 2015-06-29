@@ -358,6 +358,14 @@ void SendBufToCamera() {
   // some command need to be executed in MewPro side before sending it to camera
   int command = (buf[1] << 8) + buf[2];
   switch (command) {
+  case SET_CAMERA_POWER_DOWN: // PW
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println(F("PW00"));
+      Serial.flush();
+    }
+#endif
+    break;
   case SET_CAMERA_3D_SYNCHRONIZE:
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
