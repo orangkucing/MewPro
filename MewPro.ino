@@ -197,7 +197,8 @@ void setup()
   // don't forget to switch pin configurations to INPUT.
   pinMode(I2CINT, INPUT);  // Teensy: default disabled
   pinMode(HBUSRDY, INPUT); // default: analog input
-  pinMode(PWRBTN, INPUT);  // default: analog input
+  digitalWrite(PWRBTN, HIGH);
+  pinMode(PWRBTN, OUTPUT);  // default: analog input
 }
 
 void loop() 

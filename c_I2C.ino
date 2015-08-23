@@ -437,11 +437,10 @@ void stopRecording()
 // Camera power On
 void powerOn()
 {
-  pinMode(PWRBTN, OUTPUT);
   digitalWrite(PWRBTN, LOW);
   delay(1000);
   tdDone = false;
-  pinMode(PWRBTN, INPUT);
+  digitalWrite(PWRBTN, HIGH);
 }
 
 
