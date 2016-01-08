@@ -483,6 +483,9 @@ void checkCameraCommands()
       case '!':
         bufp = 1;
         __debug(F("role change"));
+#ifdef USE_GENLOCK
+        __debug(F("WARNING! NO SLAVES IN GENLOCK! You must set every camera MASTER"));
+#endif
         roleChange();
         while (inputAvailable()) {
           if (myRead() == '\n') {
