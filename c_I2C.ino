@@ -42,6 +42,7 @@ byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
 int bufp = 1;
 volatile boolean recvq = false;
 unsigned long previous_sync;  // last sync (used by timelapse mode)
+unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
 #if !defined(__AVR_ATtiny1634__)
 // --------------------------------------------------------------------------------

@@ -33,11 +33,14 @@ void setupGenlock()
 
 void checkGenlock()
 {
+  noInterrupts();
+  if (timelapse > 0 && !waiting && millis() - previous_sync >= timelapse) {
+    queueIn(F("SY2"));
+  }
+  interrupts();
 }
 
 #else
-
-unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
 void startGenlock()
 {
@@ -80,8 +83,7 @@ void setupGenlock()
 void checkGenlock()
 {
   noInterrupts();
-  unsigned long currentmillis = millis();
-  if (timelapse > 0 && !waiting && currentmillis - previous_sync >= timelapse) {
+  if (timelapse > 0 && !waiting && millis() - previous_sync >= timelapse) {
     timelapse = 0;
     queueIn(F("SY2"));
   }

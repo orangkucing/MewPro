@@ -133,6 +133,22 @@ void bacpacCommand()
     // shutter button of master is pressed
     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = recv[3];
     SendBufToCamera();
+#ifdef USE_GENLOCK
+    switch(buf[3]) {
+    case 0:
+      timelapse = 0;
+      break;
+    case 1:
+      if (td[TD_MODE] == MODE_TIMELAPSE) {
+        timelapse = (unsigned long)td[TD_PHOTO_XSEC] * 1000;
+        if (timelapse == 0) {
+          timelapse = 500;
+        }
+        timelapse -= 30; // margin
+      }
+      break;
+    }
+#endif
     return;
   case SET_BACPAC_DATE_TIME: // TM
     memcpy((char *)td+TD_DATE_TIME_year, (char *)recv+TD_DATE_TIME_year, 6);
