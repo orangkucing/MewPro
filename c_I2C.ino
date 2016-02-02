@@ -59,7 +59,7 @@ void receiveHandler(int numBytes)
     recv[i++] = WIRE.read();
     recvq = true;
   }
-  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
+  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
     case 1:
       ledOn();
@@ -106,7 +106,7 @@ void receiveHandler()
     recv[i] = WIRE.read();
     recvq = true;
   }
-  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
+  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
     case 1:
       ledOn();
@@ -219,7 +219,7 @@ void receiveHandler(size_t numBytes)
     recv[i++] = WIRE.read();
     recvq = true;
   }
-  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
+  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
     case 1:
       ledOn();
