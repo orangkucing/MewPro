@@ -55,22 +55,13 @@ void receiveHandler(int numBytes)
 #endif
 {
   int i = 0;
-  while (WIRE.available()) {
+  if (!WIRE.available()) {
+    return;
+  }
+  do {
     recv[i++] = WIRE.read();
-    recvq = true;
-  }
-  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
-    switch (recv[3]) {
-    case 1:
-      ledOn();
-      break;
-    case 0:
-      ledOff();
-      break;
-    default:
-      break;
-    }
-  }
+  } while (WIRE.available());
+  recvq = true;
 }
 
 void requestHandler()
@@ -93,30 +84,16 @@ void receiveHandler()
 {
   int datalen;
   // since data length is variable and not yet known, read one byte first.
-  WIRE.requestFrom(I2CPROXY, 1, I2C_NOSTOP);
+  WIRE.requestFrom(I2CPROXY, TD_BUFFER_SIZE, I2C_NOSTOP);
   if (WIRE.available()) {
     datalen = WIRE.read() & 0x7f;
+    recvq = true;
   } else {
     // panic! error
     datalen = -1;
   }
-  // request again
-  WIRE.requestFrom(I2CPROXY, datalen + 1, I2C_STOP);
-  for (int i = 0; i <= datalen; i++) {
+  for (int i = 0; i <= datalen && WIRE.available(); i++) {
     recv[i] = WIRE.read();
-    recvq = true;
-  }
-  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
-    switch (recv[3]) {
-    case 1:
-      ledOn();
-      break;
-    case 0:
-      ledOff();
-      break;
-    default:
-      break;
-    }
   }
 }
 
@@ -215,22 +192,13 @@ void receiveHandler(size_t numBytes)
   
   // SMARTY
   int i = 0;
-  while (WIRE.available()) {
+  if (!WIRE.available()) {
+    return;
+  }
+  do {
     recv[i++] = WIRE.read();
-    recvq = true;
-  }
-  if (i > 3 && (recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
-    switch (recv[3]) {
-    case 1:
-      ledOn();
-      break;
-    case 0:
-      ledOff();
-      break;
-    default:
-      break;
-    }
-  }
+  } while (WIRE.available());
+  recvq = true;
 }
 
 void requestHandler()
@@ -344,7 +312,6 @@ void __printBuf(byte *p)
     }
   }
   Serial.println("");
-  Serial.flush();
 }
 
 void _printInput()
@@ -363,7 +330,6 @@ void SendBufToCamera() {
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
       Serial.println(F("PW00"));
-      Serial.flush();
     }
 #endif
     break;
@@ -373,7 +339,6 @@ void SendBufToCamera() {
       Serial.print(F("SH"));
       printHex(buf[3], true);
       Serial.println("");
-      Serial.flush();
     }
 #endif
     noInterrupts();
@@ -387,7 +352,6 @@ void SendBufToCamera() {
       Serial.print(F("UM"));  // Warn: UM is sent to Dongle but Dongle should not send it to Bacpac.
       printHex(buf[3], true);
       Serial.println("");
-      Serial.flush();
     }
 #endif
     waiting = true;
@@ -496,7 +460,6 @@ void checkCameraCommands()
         return;
       case '/':
         Serial.println(F(MEWPRO_FIRMWARE_VERSION));
-        Serial.flush();
         return;
       default:
         if (bufp >= 3 && isxdigit(c)) {

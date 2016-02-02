@@ -25,7 +25,6 @@ void bacpacCommand()
     if (1) { // send to Dongle
       Serial.println("");
       Serial.println('@');  // power on
-      Serial.flush();
     }
 #endif
     while (digitalRead(I2CINT) != HIGH) { // wait until camera pullups I2CINT
@@ -68,7 +67,6 @@ void bacpacCommand()
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
       Serial.println(F("PW00"));
-      Serial.flush();
     }
 #endif
     return;
@@ -76,8 +74,11 @@ void bacpacCommand()
     switch (recv[3]) {
     case 0: // CAPTURE_STOP
       stopGenlock();
+      ledOff();
       break;
     case 1: // CAPTURE_START
+      ledOn();
+      // fall down
     case 2: // CAPTURE_INTERMEDIATE (PES only)
       startGenlock();
       break;
@@ -251,7 +252,6 @@ void checkBacpacCommands()
             printHex(td[i], true);
           }
           Serial.println("");
-          Serial.flush();
         }
 #else
         _setTime();
