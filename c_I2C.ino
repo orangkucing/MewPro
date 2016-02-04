@@ -40,7 +40,9 @@ const int PAGESIZE = 8; // 24XX01, 24XX02
 byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
 
 int bufp = 1;
-volatile boolean recvq = false;
+volatile int recvb = 0, recve = 0;
+#define RECV(a) (recv[(recvb + (a)) % MEWPRO_BUFFER_LENGTH])
+
 unsigned long previous_sync;  // last sync (used by timelapse mode)
 unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
@@ -59,9 +61,9 @@ void receiveHandler(int numBytes)
     return;
   }
   do {
-    recv[i++] = WIRE.read();
+    recv[(recve + i++) % MEWPRO_BUFFER_LENGTH] = WIRE.read();
   } while (WIRE.available());
-  recvq = true;
+  recve = (recve + (recv[recve] & 0x7F) + 1) % MEWPRO_BUFFER_LENGTH;
 }
 
 void requestHandler()
@@ -73,6 +75,7 @@ void requestHandler()
 void resetI2C()
 {
   emptyQueue();
+  recvb = 0; recve = 0;
   WIRE.begin(SMARTY);
   WIRE.onReceive(receiveHandler);
   WIRE.onRequest(requestHandler);
@@ -82,24 +85,21 @@ void resetI2C()
 
 void receiveHandler()
 {
-  int datalen;
-  // since data length is variable and not yet known, read one byte first.
+  int i = 0;
   WIRE.requestFrom(I2CPROXY, TD_BUFFER_SIZE, I2C_NOSTOP);
-  if (WIRE.available()) {
-    datalen = WIRE.read() & 0x7f;
-    recvq = true;
-  } else {
-    // panic! error
-    datalen = -1;
+  if (!WIRE.available()) {
+    return;
   }
-  for (int i = 0; i <= datalen && WIRE.available(); i++) {
-    recv[i] = WIRE.read();
-  }
+  do {
+    recv[(recve + i++) % MEWPRO_BUFFER_LENGTH] = WIRE.read();
+  } while (WIRE.available());
+  recve = (recve + (recv[recve] & 0x7F) + 1) % MEWPRO_BUFFER_LENGTH;
 }
 
 void resetI2C()
 {
   emptyQueue();
+  recvb = 0; recve = 0;
   WIRE.begin();
 }
 
@@ -196,9 +196,9 @@ void receiveHandler(size_t numBytes)
     return;
   }
   do {
-    recv[i++] = WIRE.read();
+    recv[(recve + i++) % MEWPRO_BUFFER_LENGTH] = WIRE.read();
   } while (WIRE.available());
-  recvq = true;
+  recve = (recve + (recv[recve] & 0x7F) + 1) % MEWPRO_BUFFER_LENGTH;
 }
 
 void requestHandler()
@@ -220,7 +220,7 @@ void requestHandler()
 void resetI2C()
 {
   emptyQueue();
-  
+  recvb = 0; recve = 0;
   WIRE.begin(I2CEEPROM, ((SMARTY << 1) | 1));
   WIRE.onAddrReceive(addressHandler);
   WIRE.onReceive(receiveHandler);
@@ -296,29 +296,23 @@ void printHex(uint8_t d, boolean upper)
   Serial.print(t);
 }
 
-void __printBuf(byte *p)
-{
-  int buflen = p[0] & 0x7f;
-
-  for (int i = 0; i <= buflen; i++) {
-    if (i == 1 && isprint(p[1]) || i == 2 && p[1] != 0 && isprint(p[2])) {
-      if (i == 1) {
-        Serial.print(' ');
-      }
-      Serial.print((char) p[i]);
-    } else {
-      Serial.print(' ');
-      printHex(p[i], false);
-    }
-  }
-  Serial.println("");
-}
-
 void _printInput()
 {
   if (debug) {
+    int buflen = RECV(0) & 0x7f;
     Serial.print('>');
-    __printBuf(recv);
+    for (int i = 0; i <= buflen; i++) {
+      if (i == 1 && isprint(RECV(1)) || i == 2 && RECV(1) != 0 && isprint(RECV(2))) {
+        if (i == 1) {
+        Serial.print(' ');
+        }
+        Serial.print((char) RECV(i));
+      } else {
+        Serial.print(' ');
+        printHex(RECV(i), false);
+      }
+    }
+    Serial.println("");  
   }
 }
 
@@ -357,9 +351,6 @@ void SendBufToCamera() {
     waiting = true;
     break;
   case SET_CAMERA_SETTING: // TD
-    if (!tdDone) {
-      return;
-    }
     waiting = true;
     break;
   case GET_CAMERA_INFO:
@@ -380,8 +371,20 @@ void SendBufToCamera() {
     break;
   }
   if (debug) {
+    int buflen = buf[0] & 0x7f;
     Serial.print('<');
-    __printBuf(buf);
+    for (int i = 0; i <= buflen; i++) {
+      if (i == 1 && isprint(buf[1]) || i == 2 && buf[1] != 0 && isprint(buf[2])) {
+        if (i == 1) {
+          Serial.print(' ');
+        }
+        Serial.print((char) buf[i]);
+      } else {
+        Serial.print(' ');
+        printHex(buf[i], false);
+      }
+    }
+    Serial.println("");
   }
 #if !defined(USE_I2C_PROXY)
   digitalWrite(I2CINT, LOW);

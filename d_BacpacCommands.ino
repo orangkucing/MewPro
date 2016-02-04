@@ -17,7 +17,7 @@ const unsigned char validationString[19] PROGMEM = { 18, 0, 0, 3, 1, 0, 1, 0x3f,
 
 void bacpacCommand()
 {
-  int command = (recv[1] << 8) + recv[2];
+  int command = (RECV(1) << 8) + RECV(2);
   switch (command) {
   case GET_BACPAC_PROTOCOL_VERSION: // vs
     ledOff();
@@ -34,18 +34,18 @@ void bacpacCommand()
     SendBufToCamera();
     delay(200); // need a short delay the validation string to be read by camera
     queueIn(F("cv"));
-    return;
+    break;
   case SET_BACPAC_DELETE_ALL: // DA
-    return;
+    break;
   case SET_BACPAC_DELETE_LAST: // DL
-    return;
+    break;
   case SET_BACPAC_FAULT: // FN
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
-    if (recv[3] == 0x0c) {
+    if (RECV(3) == 0x0c) {
 //      queueIn(F("XS1"));
     }
-    return;
+    break;
   case SET_BACPAC_HEARTBEAT: // HB
 #ifdef USE_GENLOCK
     buf[0] = 1; buf[1] = 0; // "ok"
@@ -53,16 +53,16 @@ void bacpacCommand()
     if (isMaster()) {
 //         baterry:remaining:photos:seconds:videos:media:
 //         03      FFFF      0000   FFFF    0000   00    FFFFFF
-//      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
-      tdDone = true;
-      return;   
-    }
+//      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy  
+    } else // fall down
 #endif
     if (!tdDone) {
       emulateDetachBacpac();
+      recvb = 0; recve = 0;
+      tdDone = true;
+      return;
     }
-    tdDone = true;
-    return;
+    break;
   case SET_BACPAC_POWER_DOWN: // PW
     tdDone = false;
 #ifdef USE_GENLOCK
@@ -71,10 +71,10 @@ void bacpacCommand()
       Serial.flush();
     }
 #endif
-    recvq = false; // clear I2C buffer
+    recvb = 0; recve = 0; // clear I2C buffer
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
-    switch (recv[3]) {
+    switch (RECV(3)) {
     case 0: // CAPTURE_STOP
       stopGenlock();
       ledOff();
@@ -98,9 +98,9 @@ void bacpacCommand()
       }
       break;
     }
-    return;
+    break;
   case SET_BACPAC_WIFI: // WI
-    return;
+    break;
   case SET_BACPAC_SLAVE_SETTINGS: // XS
 #ifndef USE_GENLOCK
     // every second message will be off if we send "XS0" here
@@ -108,34 +108,34 @@ void bacpacCommand()
     if (debug) {
       char tmp[13];
       // battery level: 0-3 (4 if charging)
-      Serial.print(F(" batt_level:")); Serial.print(recv[4]);
+      Serial.print(F(" batt_level:")); Serial.print(RECV(4));
       // photos remaining
-      Serial.print(F(" remaining:")); Serial.print((recv[5] << 8) + recv[6]);
+      Serial.print(F(" remaining:")); Serial.print((RECV(5) << 8) + RECV(6));
       // photos on microSD card
-      Serial.print(F(" photos:")); Serial.print((recv[7] << 8) + recv[8]);
+      Serial.print(F(" photos:")); Serial.print((RECV(7) << 8) + RECV(8));
       // video time remaining (minutes)
-      if ((recv[9] << 8) + recv[10] == 0) { // GoPro firmware bug!
+      if ((RECV(9) << 8) + RECV(10) == 0) { // GoPro firmware bug!
         Serial.print(F(" minutes:")); Serial.print(F("unknown"));
       } else {
-        Serial.print(F(" minutes:")); Serial.print((recv[9] << 8) + recv[10]);
+        Serial.print(F(" minutes:")); Serial.print((RECV(9) << 8) + RECV(10));
       }
       // videos on microSD card
-      Serial.print(F(" videos:")); Serial.print((recv[11] << 8) + recv[12]);
+      Serial.print(F(" videos:")); Serial.print((RECV(11) << 8) + RECV(12));
       // maximum file size (4GB if FAT32, 0 means infinity if exFAT)
       // if one video file exceeds the limit then GoPro will divide it into smaller files automatically
       Serial.print(' ');
-      printHex(recv[13], false);
+      printHex(RECV(13), false);
       Serial.print(F("GB "));
-      printHex(recv[14], false);
-      printHex(recv[15], false);
-      printHex(recv[16], false);
+      printHex(RECV(14), false);
+      printHex(RECV(15), false);
+      printHex(RECV(16), false);
       Serial.println("");
     }
  #endif
-    return;
+    break;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
-    buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = recv[3];
+    buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = RECV(3);
     SendBufToCamera();
 #ifdef USE_GENLOCK
     switch(buf[3]) {
@@ -153,27 +153,30 @@ void bacpacCommand()
       break;
     }
 #endif
-    return;
+    break;
   case SET_BACPAC_DATE_TIME: // TM
-    memcpy((char *)td+TD_DATE_TIME_year, (char *)recv+TD_DATE_TIME_year, 6);
+    for (int i = 0; i < 6; i++) {
+      td[TD_DATE_TIME_year + i] = RECV(TD_DATE_TIME_year + i);
+    }
     _setTime();
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
-    return;
+    break;
   default:
+#ifdef USE_GENLOCK
+    // other commands are listed in tdtable[]
+    for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
+      if (pgm_read_word(tdtable + offset - 0x09) == command) {
+        buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
+        SendBufToCamera();
+        queueIn(F("td")); // let camera report setting in full
+        break;
+      }
+    }
+#endif
     break;
   }
-#ifdef USE_GENLOCK
-  // other commands are listed in tdtable[]
-  for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
-    if (pgm_read_word(tdtable + offset - 0x09) == command) {
-      buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
-      SendBufToCamera();
-      queueIn(F("td")); // let camera report setting in full
-      return;
-    }
-  }
-#endif
+  recvb = (recvb + (recv[recvb] & 0x7F) + 1) % MEWPRO_BUFFER_LENGTH;
 }
 
 // dummy setting: should be overridden soon
@@ -193,11 +196,11 @@ void checkBacpacCommands()
     receiveHandler();
   }
 #endif
-  if (recvq) {
+  if (recvb != recve) {
     waiting = false;
     _printInput();
-    if (!(recv[0] & 0x80)) {// information bytes
-      if (recv[0] == 0x25) {
+    if (!(RECV(0) & 0x80)) {// information bytes
+      if (RECV(0) == 0x25) {
         // initialize bacpac
         if (!tdDone) { // this is first time to see vs
 #ifdef USE_GENLOCK
@@ -238,10 +241,12 @@ void checkBacpacCommands()
             userSettings();
           }
         }
-      } else if (recv[0] == 0x27) {
-        // Usual packet length (recv[0]) is 0 or 1.
+      } else if (RECV(0) == 0x27) {
+        // Usual packet length (RECV(0)) is 0 or 1.
         // Packet length 0x27 does not exist but SMARTY_START
-        memcpy((char *)td+1, recv, TD_BUFFER_SIZE-1);
+        for (int i = 0; i < TD_BUFFER_SIZE - 1; i++) {
+          td[i + 1] = RECV(i);
+        }
         td[0] = TD_BUFFER_SIZE-1; td[1] = 'T'; td[2] = 'D'; // get ready to submit to slave
 #ifdef USE_GENLOCK
         if (isMaster()) {
@@ -263,9 +268,9 @@ void checkBacpacCommands()
       } else {
         ; // do nothing
       }
+      recvb = (recvb + (recv[recvb] & 0x7F) + 1) % MEWPRO_BUFFER_LENGTH;
     } else { 
-        bacpacCommand();
+      bacpacCommand();
     }
-    recvq = false;
   }
 }
