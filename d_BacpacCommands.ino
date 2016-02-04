@@ -54,6 +54,7 @@ void bacpacCommand()
 //         baterry:remaining:photos:seconds:videos:media:
 //         03      FFFF      0000   FFFF    0000   00    FFFFFF
 //      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
+      tdDone = true;
       return;   
     }
 #endif
@@ -67,8 +68,10 @@ void bacpacCommand()
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
       Serial.println(F("PW00"));
+      Serial.flush();
     }
 #endif
+    recvq = false; // clear I2C buffer
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (recv[3]) {

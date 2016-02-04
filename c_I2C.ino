@@ -356,9 +356,14 @@ void SendBufToCamera() {
 #endif
     waiting = true;
     break;
+  case SET_CAMERA_SETTING: // TD
+    if (!tdDone) {
+      return;
+    }
+    waiting = true;
+    break;
   case GET_CAMERA_INFO:
   case GET_CAMERA_SETTING:
-  case SET_CAMERA_SETTING:
   case SET_CAMERA_VIDEO_OUTPUT:
   case SET_CAMERA_AUDIOINPUTMODE:
   case SET_CAMERA_DATE_TIME:
@@ -419,6 +424,7 @@ void checkCameraCommands()
         continue;
       case '\r':
       case '\n':
+        serialfirst = false;
         if (bufp != 1) {
           buf[0] = bufp - 1;
           bufp = 1;
@@ -428,6 +434,7 @@ void checkCameraCommands()
       case '&':
         bufp = 1;
         debug = !debug;
+        serialfirst = false;
         __debug(F("debug messages on"));
         while (inputAvailable()) {
           if (myRead() == '\n') {
@@ -437,6 +444,7 @@ void checkCameraCommands()
         return;  
       case '@':
         bufp = 1;
+        serialfirst = false;
         __debug(F("camera power on"));
         powerOn();
         while (inputAvailable()) {
@@ -447,6 +455,7 @@ void checkCameraCommands()
         return;
       case '!':
         bufp = 1;
+        serialfirst = false;
         __debug(F("role change"));
 #ifdef USE_GENLOCK
         __debug(F("WARNING! NO SLAVES IN GENLOCK! You must set every camera MASTER"));
@@ -459,6 +468,7 @@ void checkCameraCommands()
         }
         return;
       case '/':
+        serialfirst = false;
         Serial.println(F(MEWPRO_FIRMWARE_VERSION));
         return;
       default:

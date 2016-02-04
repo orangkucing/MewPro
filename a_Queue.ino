@@ -3,11 +3,13 @@
 byte queue[MEWPRO_BUFFER_LENGTH];
 volatile int queueb = 0, queuee = 0;
 boolean waiting = false; // don't read the next command from the queue
+boolean serialfirst = false;
 
 void emptyQueue()
 {
   queueb = queuee = 0;
   waiting = false;
+  serialfirst = false;
 }
 
 boolean inputAvailable()
@@ -20,11 +22,16 @@ boolean inputAvailable()
 
 byte myRead()
 {
+  if (serialfirst && Serial.available()) {
+    return Serial.read();
+  }
   if (queueb != queuee) {
     byte c = queue[queueb];
     queueb = (queueb + 1) % MEWPRO_BUFFER_LENGTH;
+    serialfirst = false;
     return c;
   }
+  serialfirst = true;
   return Serial.read();
 }
 
