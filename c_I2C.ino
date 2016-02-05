@@ -79,7 +79,7 @@ void resetI2C()
 void receiveHandler()
 {
   int i = 0;
-  WIRE.requestFrom(I2CPROXY, TD_BUFFER_SIZE, I2C_NOSTOP);
+  WIRE.requestFrom(I2CPROXY, TD_BUFFER_SIZE, I2C_STOP);
   if (!WIRE.available()) {
     return;
   }
@@ -342,6 +342,12 @@ void SendBufToCamera() {
     waiting = true;
     break;
   case SET_CAMERA_SETTING: // TD
+    for (int i = 0; i < TD_BUFFER_SIZE; i++) {
+      td[i] = buf[i];
+    }
+    // Upside is always up
+    td[TD_FLIP_MIRROR] = 1;
+    //
 #ifdef USE_GENLOCK
     if (!tdDone) {
       tdDone = true;

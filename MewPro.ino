@@ -50,7 +50,7 @@ END copy */
 //   Copyright (c) 2014-2016 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2016020401"
+#define MEWPRO_FIRMWARE_VERSION "2016020500"
 
 //
 #include <Arduino.h>
