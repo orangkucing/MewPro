@@ -37,12 +37,6 @@ const int WRITECYCLETIME = 5000;
 const int PAGESIZE = 8; // 24XX01, 24XX02
 // const int PAGESIZE = 16; // 24XX04, 24XX08, 24XX16
 
-byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
-
-int bufp = 1;
-volatile int recvb = 0, recve = 0;
-#define RECV(a) (recv[(recvb + (a)) % MEWPRO_BUFFER_LENGTH])
-
 unsigned long previous_sync;  // last sync (used by timelapse mode)
 unsigned long timelapse = 0;  // used by MODE_TIMELAPSE
 
@@ -75,7 +69,6 @@ void requestHandler()
 void resetI2C()
 {
   emptyQueue();
-  recvb = 0; recve = 0;
   WIRE.begin(SMARTY);
   WIRE.onReceive(receiveHandler);
   WIRE.onRequest(requestHandler);
@@ -99,7 +92,6 @@ void receiveHandler()
 void resetI2C()
 {
   emptyQueue();
-  recvb = 0; recve = 0;
   WIRE.begin();
 }
 
@@ -220,7 +212,6 @@ void requestHandler()
 void resetI2C()
 {
   emptyQueue();
-  recvb = 0; recve = 0;
   WIRE.begin(I2CEEPROM, ((SMARTY << 1) | 1));
   WIRE.onAddrReceive(addressHandler);
   WIRE.onReceive(receiveHandler);
@@ -351,6 +342,12 @@ void SendBufToCamera() {
     waiting = true;
     break;
   case SET_CAMERA_SETTING: // TD
+#ifdef USE_GENLOCK
+    if (!tdDone) {
+      tdDone = true;
+      return;
+    }
+#endif
     waiting = true;
     break;
   case GET_CAMERA_INFO:
@@ -416,7 +413,6 @@ void powerOn()
   digitalWrite(PWRBTN, HIGH);
 }
 
-
 void checkCameraCommands()
 {
   while (inputAvailable())  {
@@ -439,22 +435,14 @@ void checkCameraCommands()
         debug = !debug;
         serialfirst = false;
         __debug(F("debug messages on"));
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
+        __emptyInputBuffer();
         return;  
       case '@':
         bufp = 1;
         serialfirst = false;
         __debug(F("camera power on"));
         powerOn();
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
+        __emptyInputBuffer();
         return;
       case '!':
         bufp = 1;
@@ -464,11 +452,7 @@ void checkCameraCommands()
         __debug(F("WARNING! NO SLAVES IN GENLOCK! You must set every camera MASTER"));
 #endif
         roleChange();
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
+        __emptyInputBuffer();
         return;
       case '/':
         serialfirst = false;
@@ -496,5 +480,3 @@ void checkCameraCommands()
     }
   }
 }
-
-

@@ -5,12 +5,11 @@ volatile int queueb = 0, queuee = 0;
 boolean waiting = false; // don't read the next command from the queue
 boolean serialfirst = false;
 
-void emptyQueue()
-{
-  queueb = queuee = 0;
-  waiting = false;
-  serialfirst = false;
-}
+byte buf[MEWPRO_BUFFER_LENGTH], recv[MEWPRO_BUFFER_LENGTH];
+
+int bufp = 1;
+volatile int recvb = 0, recve = 0;
+#define RECV(a) (recv[(recvb + (a)) % MEWPRO_BUFFER_LENGTH])
 
 boolean inputAvailable()
 {
@@ -56,4 +55,25 @@ void queueIn(const char *p)
   }
   queue[(queuee + i) % MEWPRO_BUFFER_LENGTH] = '\n';
   queuee = (queuee + i + 1) % MEWPRO_BUFFER_LENGTH;
+}
+
+void __emptyInputBuffer()
+{
+  while (inputAvailable()) {
+    if (myRead() == '\n') {
+      return;
+    }
+  }
+}
+
+void emptyQueue()
+{
+  queueb = queuee = 0;
+  recvb = recve = 0;
+  bufp = 1;
+  waiting = false;
+  serialfirst = false;
+  while (Serial.available()) { // clear serial buffer
+    Serial.read();
+  }
 }

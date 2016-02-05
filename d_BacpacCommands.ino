@@ -26,6 +26,7 @@ void bacpacCommand()
       Serial.println("");
       Serial.println('@');  // power on
     }
+    tdDone = true;
 #endif
     while (digitalRead(I2CINT) != HIGH) { // wait until camera pullups I2CINT
       ;
@@ -58,7 +59,7 @@ void bacpacCommand()
 #endif
     if (!tdDone) {
       emulateDetachBacpac();
-      recvb = 0; recve = 0;
+      recvb = recve = 0; // clear I2C buffer
       tdDone = true;
       return;
     }
@@ -71,7 +72,7 @@ void bacpacCommand()
       Serial.flush();
     }
 #endif
-    recvb = 0; recve = 0; // clear I2C buffer
+    recvb = recve = 0; // clear I2C buffer
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (RECV(3)) {
