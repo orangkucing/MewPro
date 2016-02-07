@@ -77,8 +77,10 @@ void bacpacCommand()
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (RECV(3)) {
     case 0: // CAPTURE_STOP
+#ifndef USE_GENLOCK
       stopGenlock();
       ledOff();
+#endif
       break;
     case 1: // CAPTURE_START
       ledOn();
@@ -95,6 +97,10 @@ void bacpacCommand()
         ledOff();
         break;
       default:
+#ifdef USE_GENLOCK
+        stopGenlock();
+        ledOff();
+#endif
         break;
       }
       break;
@@ -183,12 +189,15 @@ void bacpacCommand()
 // dummy setting: should be overridden soon
 const char tmptd[TD_BUFFER_SIZE] PROGMEM = {
   // default mode below will be overwritten so don't worry about the detailed settings here
+  // NOTE: TD_MODE must be equal to TD_DEFAULT_MODE at camera boot
+#define MODE_DEFAULT MODE_VIDEO
   0x28, 'T', 'D', 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, MODE_VIDEO, 0x05, 0xff, 0x0a, 0x07, 0x00, 0x00, 
+  0x00, MODE_DEFAULT, 0x05, 0xff, 0x0a, 0x07, 0x00, 0x00, 
   0x02, 0x00, 0x02, 0x00, 0x01, 0x02, 0x00, 0x00,
   0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00, 0x00,
-  0x0a, };
+  0x00, 0x00, 0x00, 0x01, MODE_DEFAULT, 0x00, 0x00, 0x00,
+  0x0a,
+};
 
 void checkBacpacCommands()
 {
@@ -203,8 +212,10 @@ void checkBacpacCommands()
     if (!(RECV(0) & 0x80)) {// information bytes
       if (RECV(0) == 0x25) {
         // initialize bacpac
+#ifndef USE_GENLOCK
         if (!tdDone) { // this is first time to see vs
-#ifdef USE_GENLOCK
+#else
+        if (1) {
           if (isMaster()) {
             __debug(F("master bacpac and use genlock"));
 //            resetVMD();
