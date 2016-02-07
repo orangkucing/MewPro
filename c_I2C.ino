@@ -321,10 +321,18 @@ void SendBufToCamera() {
   case SET_CAMERA_3D_SYNCHRONIZE:
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      Serial.print(F("SH"));
-      printHex(buf[3], true);
-      Serial.println("");
-      Serial.flush();
+      switch (buf[3]) {
+      case 0:
+      case 1:
+        Serial.print(F("SH"));
+        printHex(buf[3], true);
+        Serial.println("");
+        Serial.flush();
+        delay(5);
+        break;
+      default:
+        break;
+      }
     }
 #endif
     noInterrupts();

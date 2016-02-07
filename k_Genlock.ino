@@ -35,7 +35,8 @@ void checkGenlock()
 {
   noInterrupts();
   if (timelapse > 0 && !waiting && millis() - previous_sync >= timelapse) {
-    queueIn(F("SY2"));
+    buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = 2;
+    SendBufToCamera();
   }
   interrupts();
 }

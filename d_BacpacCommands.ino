@@ -77,10 +77,8 @@ void bacpacCommand()
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (RECV(3)) {
     case 0: // CAPTURE_STOP
-#ifndef USE_GENLOCK
       stopGenlock();
       ledOff();
-#endif
       break;
     case 1: // CAPTURE_START
       ledOn();
@@ -97,10 +95,6 @@ void bacpacCommand()
         ledOff();
         break;
       default:
-#ifdef USE_GENLOCK
-        stopGenlock();
-        ledOff();
-#endif
         break;
       }
       break;
@@ -145,19 +139,10 @@ void bacpacCommand()
     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = RECV(3);
     SendBufToCamera();
 #ifdef USE_GENLOCK
-    switch(buf[3]) {
-    case 0:
-      timelapse = 0;
-      break;
-    case 1:
-      if (td[TD_MODE] == MODE_TIMELAPSE) {
+    timelapse = 0;  
+    if (td[TD_MODE] == MODE_TIMELAPSE && buf[3] == 1) {
         timelapse = (unsigned long)td[TD_PHOTO_XSEC] * 1000;
-        if (timelapse == 0) {
-          timelapse = 500;
-        }
-        timelapse -= 30; // margin
-      }
-      break;
+        timelapse -= 10; // margin
     }
 #endif
     break;

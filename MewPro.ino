@@ -50,7 +50,7 @@ END copy */
 //   Copyright (c) 2014-2016 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2016020500"
+#define MEWPRO_FIRMWARE_VERSION "2016020800"
 
 //
 #include <Arduino.h>
@@ -204,7 +204,8 @@ void setup()
 void loop() 
 {
   // Attach or detach bacpac
-  if (digitalRead(HBUSRDY) == HIGH) {
+  //if (digitalRead(HBUSRDY) == HIGH) {
+  if ((PINC & _BV(0)) == 1) { // speed up!
     if (lastHerobusState != HIGH) {
 #if !defined(USE_I2C_PROXY)
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
