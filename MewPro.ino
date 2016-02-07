@@ -204,8 +204,8 @@ void setup()
 void loop() 
 {
   // Attach or detach bacpac
-  //if (digitalRead(HBUSRDY) == HIGH) {
-  if ((PINC & _BV(0)) == 1) { // speed up!
+  if (digitalRead(HBUSRDY) == HIGH) {
+  //if ((PINC & _BV(0)) == 1) { // speed up!
     if (lastHerobusState != HIGH) {
 #if !defined(USE_I2C_PROXY)
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
