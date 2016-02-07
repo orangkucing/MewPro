@@ -324,6 +324,7 @@ void SendBufToCamera() {
       Serial.print(F("SH"));
       printHex(buf[3], true);
       Serial.println("");
+      Serial.flush();
     }
 #endif
     noInterrupts();
