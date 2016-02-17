@@ -4,16 +4,31 @@
 
 boolean setupTimeAlarmsIsCalled = false; // to avoid setupTimeAlarms() to be called twice.
 
-void WeeklyAlarm()
+void AddMinutes(int *h, int *m, int x)
 {
+  *m += x;
+  if (*m >= 60) {
+    *h += *m / 60; *m %= 60;
+    *h %= 24;
+  }
+}
+
+void exampleAlarm()
+{
+  int h, m;
   queueIn(F("@")); // power on
-  Alarm.alarmOnce(9, 0, 0, alarmStart); // start time 09:00:00
+  h = hour(); m = minute();
+  AddMinutes(&h, &m, 1);
+  Alarm.alarmOnce(h, m, 0, alarmStart);
 }
 
 void alarmStart()
 {
+  int h, m;
   startRecording();
-  Alarm.alarmOnce(9, 5, 0, alarmStop); // stop time 09:05:00
+  h = hour(); m = minute();
+  AddMinutes(&h, &m, 1);
+  Alarm.alarmOnce(h, m, 0, alarmStop);
 }
 
 void alarmStop()
@@ -33,12 +48,24 @@ void _setTime() {
 
 void setupTimeAlarms()
 {
-  if (!setupTimeAlarmsIsCalled) {
+  if (!setupTimeAlarmsIsCalled) { 
+    int h, m;
     setupTimeAlarmsIsCalled = true;
     __debug(F("Time alarms set"));
-    // this sample code will start the camera at a certain time of day, for a set period, then turn off for a period of seven days.
-    // start video record, repeat every Saturday start time 09:00, finish time 09:05, power off
-    Alarm.alarmRepeat(dowSaturday, 8, 59, 45, WeeklyAlarm); // power on at 15 seconds before start
+    // current time := hh:mm:xx
+    // 1. power on hh:mm+1:45; start hh:mm+2:00; stop hh:mm+3:00; off hh:mm+3:05;
+    // 2. power on hh:mm+3:45; start hh:mm+4:00; stop hh:mm+5:00; off hh:mm+5:05;
+    // 3. power on hh:mm+5:45; start hh:mm+6:00; stop hh:mm+7:00; off hh:mm+7:05;
+    // 4. power on hh:mm+7:45; start hh:mm+8:00; stop hh:mm+9:00; off hh:mm+9:05;   
+    h = hour(); m = minute();
+    AddMinutes(&h, &m, 1);
+    Alarm.alarmRepeat(h, m, 45, exampleAlarm);
+    AddMinutes(&h, &m, 2);
+    Alarm.alarmRepeat(h, m, 45, exampleAlarm);
+    AddMinutes(&h, &m, 2);
+    Alarm.alarmRepeat(h, m, 45, exampleAlarm);
+    AddMinutes(&h, &m, 2);
+    Alarm.alarmRepeat(h, m, 45, exampleAlarm);
     // suspend for now
     //alarmSuspend();
   }

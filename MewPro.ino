@@ -50,7 +50,7 @@ END copy */
 //   Copyright (c) 2014-2016 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2016020800"
+#define MEWPRO_FIRMWARE_VERSION "2016021700"
 
 //
 #include <Arduino.h>
@@ -98,7 +98,7 @@ boolean debug = true;
 // Arduino Due
 //     hardware/arduino/sam/libraries/Wire/Wire.h
 //            old: #define BUFFER_LENGTH 32                        -->   new: #define BUFFER_LENGTH 64
-#include <Wire.h> // *** please comment out this line if __MK20DX256__ or __MK20DX128__ or __MKL26Z64__ or __AVR_ATtiny1634__ is defined ***
+#include <Wire.h> // *** please comment out this and the following three lines if __MK20DX256__ or __MK20DX128__ or __MKL26Z64__ or __AVR_ATtiny1634__ is defined ***
 #if BUFFER_LENGTH < 64
 #error Please modify Arduino Wire library source code to increase the I2C buffer size
 #endif
