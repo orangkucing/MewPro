@@ -166,8 +166,12 @@ void userSettings()
 {
   // This function is called once after camera boot.
   // you can set put any camera commands here. For example:
-  // queueIn("AI1");
-  // queueIn("TI5");
+  // if (!isMaster()) {
+  //   queueIn(F("!")); // if slave change to master
+  // }
+  // queueIn(F("VO0")); // preview off
+  // queueIn(F("CM0")); // change camera mode to video
+  // queueIn(F("TI5"));
 }
 
 void setup()
