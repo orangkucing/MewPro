@@ -239,7 +239,7 @@ void checkBacpacCommands()
           }
         }
       } else if (RECV(0) == 0x27) {
-        // Usual packet length (RECV(0)) is 0 or 1.
+        // Usual packet length (RECV(0)) is 1 or 2.
         // Packet length 0x27 does not exist but SMARTY_START
         for (int i = 0; i < TD_BUFFER_SIZE - 1; i++) {
           td[i + 1] = RECV(i);

@@ -317,6 +317,7 @@ void SendBufToCamera() {
       Serial.println(F("PW00"));
     }
 #endif
+    tdDone = false;
     break;
   case SET_CAMERA_3D_SYNCHRONIZE:
 #ifdef USE_GENLOCK
