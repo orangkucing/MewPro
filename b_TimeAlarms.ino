@@ -16,7 +16,7 @@ void AddMinutes(int *h, int *m, int x)
 void exampleAlarm()
 {
   int h, m;
-  queueIn(F("@")); // power on
+  powerOn(); // power on
   h = hour(); m = minute();
   AddMinutes(&h, &m, 1);
   Alarm.alarmOnce(h, m, 0, alarmStart);
