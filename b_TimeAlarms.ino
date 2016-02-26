@@ -4,31 +4,16 @@
 
 boolean setupTimeAlarmsIsCalled = false; // to avoid setupTimeAlarms() to be called twice.
 
-void AddMinutes(int *h, int *m, int x)
-{
-  *m += x;
-  if (*m >= 60) {
-    *h += *m / 60; *m %= 60;
-    *h %= 24;
-  }
-}
-
 void exampleAlarm()
 {
-  int h, m;
-  queueIn(F("@")); // power on
-  h = hour(); m = minute();
-  AddMinutes(&h, &m, 1);
-  Alarm.alarmOnce(h, m, 0, alarmStart);
+  queueIn(F("@"));
+  Alarm.timerOnce(30, alarmStart); // 30 seconds delay for start up
 }
 
 void alarmStart()
 {
-  int h, m;
   startRecording();
-  h = hour(); m = minute();
-  AddMinutes(&h, &m, 1);
-  Alarm.alarmOnce(h, m, 0, alarmStop);
+  Alarm.timerOnce(60, alarmStop); // take video for 1 minutes
 }
 
 void alarmStop()
@@ -48,24 +33,18 @@ void _setTime() {
 
 void setupTimeAlarms()
 {
-  if (!setupTimeAlarmsIsCalled) { 
-    int h, m;
+  if (!setupTimeAlarmsIsCalled) {
+    time_t t;
     setupTimeAlarmsIsCalled = true;
     __debug(F("Time alarms set"));
-    // current time := hh:mm:xx
-    // 1. power on hh:mm+1:30; start hh:mm+2:00; stop hh:mm+3:00; off hh:mm+3:05;
-    // 2. power on hh:mm+3:30; start hh:mm+4:00; stop hh:mm+5:00; off hh:mm+5:05;
-    // 3. power on hh:mm+5:30; start hh:mm+6:00; stop hh:mm+7:00; off hh:mm+7:05;
-    // 4. power on hh:mm+7:30; start hh:mm+8:00; stop hh:mm+9:00; off hh:mm+9:05;   
-    h = hour(); m = minute();
-    AddMinutes(&h, &m, 1);
-    Alarm.alarmRepeat(h, m, 30, exampleAlarm);
-    AddMinutes(&h, &m, 2);
-    Alarm.alarmRepeat(h, m, 30, exampleAlarm);
-    AddMinutes(&h, &m, 2);
-    Alarm.alarmRepeat(h, m, 30, exampleAlarm);
-    AddMinutes(&h, &m, 2);
-    Alarm.alarmRepeat(h, m, 30, exampleAlarm);
+    // X = current time
+    //   1. power on X + 60s; start X + 90s; stop X + 150s; off X + 155s;
+    //   2. power on X + 180s; start X + 210s; stop X + 270s; off X + 275s;
+    // and repeat 1, 2 everyday.
+    t = now() + 60;
+    Alarm.alarmRepeat(hour(t), minute(t), second(t), exampleAlarm);
+    t += 120;
+    Alarm.alarmRepeat(hour(t), minute(t), second(t), exampleAlarm);
     // suspend for now
     //alarmSuspend();
   }
