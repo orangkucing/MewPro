@@ -4,7 +4,7 @@
 
 #define delay(a) Alarm.delay(a)
 
-volatile boolean alarmEntered = false;   // in order to avoid timeAdjust() or alarmPowerOn() functions called twice
+boolean alarmEntered = false;   // in order to avoid timeAdjust() or alarmPowerOn() functions called twice
 const int syncDelay = 600;               // more than 8 minute. workaround for time drift on Arduino
 const int powerOnDelay = 60;             // delay in second after camera power on 
 const int powerOffDelay = 5;             // delay in second before camera power off
@@ -15,18 +15,19 @@ void timeAdjust()
   if (!alarmEntered) {
     alarmEntered = true;
     queueIn(F("@"));
-    Alarm.timerOnce(powerOnDelay, alarmSuspend);
   }
+}
+
+void alarmFlagClear()
+{
+  alarmEntered = false;
 }
 
 // Alarm tasks
 void alarmPowerOn()
 {
-  if (!alarmEntered) {
-    alarmEntered = true;
-    queueIn(F("@"));
-    Alarm.timerOnce(powerOnDelay, alarmStartRecording);
-  }
+  queueIn(F("@"));
+  Alarm.timerOnce(powerOnDelay, alarmStartRecording);
 }
 
 void alarmStartRecording()
@@ -49,12 +50,9 @@ void alarmSuspend()
 {
   queueIn(F("PW0"));
   // alarmEntered == true for a long enough time > 8 minute (> 20 * 24 seconds).
-  Alarm.timerOnce(syncDelay, alarmFlagClear);
-}
-
-void alarmFlagClear()
-{
-  alarmEntered = false;
+  if (alarmEntered) {
+    Alarm.timerOnce(syncDelay, alarmFlagClear);
+  }
 }
 
 void _setTime() // This function is called after every time when the camera power on
@@ -79,7 +77,7 @@ Example alarm: Shooting video from 09:00
   time_t t = makeTime(tm), s;
   // Arduino's time is adjusted whenever GoPro power on.
   // Sync the time once a day. Take care the time before power-on has drifted a maximum of 8 minute!
-  s = t - syncDelay - powerOnDelay * 2 - 60;
+  s = t - 2 * syncDelay - 3 * powerOnDelay;
   Alarm.alarmRepeat(hour(s), minute(s), second(s), timeAdjust);
   //
   // just after sync with GoPro, the time is accurate enough. let's power on again and shoot video.
@@ -98,6 +96,9 @@ Example alarm 3: Shooting video on Monday and Wednesday and Friday */
 //  Alarm.alarmRepeat(dowWednesday, hour(t), minute(t), second(t), alarmPowerOn);
 //  Alarm.alarmRepeat(dowFriday, hour(t), minute(t), second(t), alarmPowerOn);
 /***********************/
+  if (alarmEntered) {
+    Alarm.timerOnce(powerOnDelay, alarmSuspend);
+  }
 }
 
 void checkTimeAlarms()
