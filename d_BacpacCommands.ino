@@ -260,7 +260,6 @@ void checkBacpacCommands()
         }
 #else
         _setTime();
-        setupTimeAlarms();
 #endif
       } else {
         ; // do nothing
