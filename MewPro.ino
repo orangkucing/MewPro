@@ -31,7 +31,6 @@
 //          2. create a folder named MewPro and upload all the files there.
 //          3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code (BEGIN / END lines should be excluded).
 /* BEGIN copy
-#include <RLduino78.h>
 #include "MewPro/MewPro.ino"
 #include "MewPro/a_Queue.ino"
 #include "MewPro/b_TimeAlarms.ino"
@@ -44,13 +43,14 @@
 #include "MewPro/i_PIRsensor.ino"
 #include "MewPro/j_VideoMotionDetect.ino"
 #include "MewPro/k_Genlock.ino"
+#include "MewPro/l_TurnedOn.ino"
 END copy */
 //
 
 //   Copyright (c) 2014-2016 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2016030200"
+#define MEWPRO_FIRMWARE_VERSION "2016032600"
 
 //
 #include <Arduino.h>
@@ -139,17 +139,20 @@ boolean debug = true;
 //   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
 #undef  USE_GENLOCK
 
+//********************************************************
+// l_TurnedOn: 7-segment display to monitor camera's status
+//   Note: Defining this option is incompatible with USE_GENLOCK and USE_SHUTTER.
+//         So make sure these two options are #undef, and boolean debug = false;
+//         Also EEPROM must be set to "slave" in order to use "XS" I2C command.
+#undef  USE_TURNED_ON
+
 // it is better to define this when RXI is connected to nothing (eg. MewPro #0 of Genlock system)
 #undef  UART_RECEIVER_DISABLE
 
 // end of Options
 //////////////////////////////////////////////////////////
 
-// if __AVR_ATmega32U4__ (Leonardo or Pro Micro) then use Serial1 (TTL) instead of Serial (USB) to communicate with genlock dongle
-#if defined(USE_GENLOCK) && defined(__AVR_ATmega32U4__)
-#define Serial Serial1
-#endif
-
+#include "DummySerial.h"
 boolean lastHerobusState = LOW;  // Will be HIGH when camera attached.
 int eepromId = 0;
 
@@ -170,7 +173,7 @@ void setup()
   // Remark. Arduino Pro Mini 328 3.3V 8MHz is too slow to catch up with the highest 115200 baud.
   //     cf. http://forum.arduino.cc/index.php?topic=54623.0
   // Set 57600 baud or slower.
-  Serial.begin(57600);
+  Serial_begin(57600);
 #ifdef UART_RECEIVER_DISABLE
 #ifndef __AVR_ATmega32U4__
   UCSR0B &= (~_BV(RXEN0));
@@ -185,6 +188,7 @@ void setup()
   setupLightSensor();
   setupPIRSensor();
   setupGenlock();
+  setupTurnedOn();
 
   setupLED(); // onboard LED setup 
   pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach. 
@@ -227,5 +231,6 @@ void loop()
   checkPIRSensor();
   checkVMD();
   checkGenlock();
+  checkStatus();
 }
 

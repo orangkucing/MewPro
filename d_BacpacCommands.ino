@@ -23,8 +23,8 @@ void bacpacCommand()
     ledOff();
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      Serial.println("");
-      Serial.println('@');  // power on
+      Serial_println("");
+      Serial_println('@');  // power on
     }
     tdDone = true;
 #endif
@@ -68,8 +68,8 @@ void bacpacCommand()
     tdDone = false;
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      Serial.println(F("PW00"));
-      Serial.flush();
+      Serial_println(F("PW00"));
+      Serial_flush();
     }
 #endif
     recvb = recve = 0; // clear I2C buffer
@@ -104,35 +104,44 @@ void bacpacCommand()
     break;
   case SET_BACPAC_SLAVE_SETTINGS: // XS
 #ifndef USE_GENLOCK
+#if defined(USE_TURNED_ON) && !defined(USE_SHUTTER)
+    {
+      // lock camera's mode to the default
+      char tmp[4];
+      tmp[0] = 'C'; tmp[1] = 'M'; tmp[2] = td[TD_DEFAULT_MODE] + '0'; tmp[3] = '\0';
+      queueIn(tmp);
+    }
+    updateStatus(); 
+#else
     // every second message will be off if we send "XS0" here
     queueIn(F("XS0"));
     if (debug) {
-      char tmp[13];
       // battery level: 0-3 (4 if charging)
-      Serial.print(F(" batt_level:")); Serial.print(RECV(4));
+      Serial_print(F(" batt_level:")); Serial_print(RECV(4));
       // photos remaining
-      Serial.print(F(" remaining:")); Serial.print((RECV(5) << 8) + RECV(6));
+      Serial_print(F(" remaining:")); Serial_print((RECV(5) << 8) + RECV(6));
       // photos on microSD card
-      Serial.print(F(" photos:")); Serial.print((RECV(7) << 8) + RECV(8));
+      Serial_print(F(" photos:")); Serial_print((RECV(7) << 8) + RECV(8));
       // video time remaining (minutes)
       if ((RECV(9) << 8) + RECV(10) == 0) { // GoPro firmware bug!
-        Serial.print(F(" minutes:")); Serial.print(F("unknown"));
+        Serial_print(F(" minutes:")); Serial_print(F("unknown"));
       } else {
-        Serial.print(F(" minutes:")); Serial.print((RECV(9) << 8) + RECV(10));
+        Serial_print(F(" minutes:")); Serial_print((RECV(9) << 8) + RECV(10));
       }
       // videos on microSD card
-      Serial.print(F(" videos:")); Serial.print((RECV(11) << 8) + RECV(12));
+      Serial_print(F(" videos:")); Serial_print((RECV(11) << 8) + RECV(12));
       // maximum file size (4GB if FAT32, 0 means infinity if exFAT)
       // if one video file exceeds the limit then GoPro will divide it into smaller files automatically
-      Serial.print(' ');
+      Serial_print(' ');
       printHex(RECV(13), false);
-      Serial.print(F("GB "));
+      Serial_print(F("GB "));
       printHex(RECV(14), false);
       printHex(RECV(15), false);
       printHex(RECV(16), false);
-      Serial.println("");
+      Serial_println("");
     }
- #endif
+#endif // USE_TURNED_ON
+#endif // USE_GENLOCK
     break;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
@@ -252,11 +261,11 @@ void checkBacpacCommands()
           // Upside is always up
           td[TD_FLIP_MIRROR] = 1;
           //
-          Serial.print(F("TD"));
+          Serial_print(F("TD"));
           for (int i = 3; i < TD_BUFFER_SIZE; i++) {
             printHex(td[i], true);
           }
-          Serial.println("");
+          Serial_println("");
         }
 #else
         _setTime();

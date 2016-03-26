@@ -235,6 +235,8 @@ extern void setupLED();
 
 // function prototypes
 //   Arduino IDE doesn't need these prototypes but does Renesas Web Compiler
+boolean isMaster(void);
+void _setTime(void);
 void resetI2C(void);
 void setupShutter(void);
 void setupSwitch(void);
@@ -242,6 +244,7 @@ void setupIRremote(void);
 void setupLightSensor(void);
 void setupPIRSensor(void);
 void setupGenlock(void);
+void setupTurnedOn(void);
 void resetVMD(void);
 void checkTimeAlarms(void);
 void checkBacpacCommands(void);
@@ -254,4 +257,10 @@ void checkVMD(void);
 void checkGenlock(void);
 void startGenlock(void);
 void stopGenlock(void);
+void updateStatus(void);
+void checkStatus(void);
 // end of function prototypes
+#if defined(REL_GR_KURUMI)
+#define pgm_read_word *(int *)
+#define memcpy_P memcpy
+#endif

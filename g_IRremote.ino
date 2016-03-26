@@ -35,7 +35,7 @@ void IRcommand()
     default: // unsupported controller key depressed
       __debug(F("IR: "));
       if (debug) {
-        Serial.println(results.value, HEX);
+        Serial_println(results.value, HEX);
       }
       break;
   }

@@ -61,11 +61,11 @@ void checkPIRSensor()
         time_t t = now();
         char s[20];
         sprintf(s, "%04d-%02d-%02d %02d:%02d:%02d", year(t), month(t), day(t), hour(t), minute(t), second(t));
-        Serial.println(s);
+        Serial_println(s);
       }
 #else
       if (debug) {
-        Serial.print(millis() / 1000);
+        Serial_print(millis() / 1000);
       }
       __debug(F(" sec"));
 #endif
@@ -91,11 +91,11 @@ void checkPIRSensor()
         time_t t = now() - pause;
         char s[20];
         sprintf(s, "%04d-%02d-%02d %02d:%02d:%02d", year(t), month(t), day(t), hour(t), minute(t), second(t));
-        Serial.println(s);
+        Serial_println(s);
       }
 #else
       if (debug) {
-        Serial.print(millis() / 1000 - pause);
+        Serial_print(millis() / 1000 - pause);
       }
       __debug(F(" sec"));
 #endif

@@ -267,7 +267,7 @@ void roleChange()
 void __debug(const __FlashStringHelper *p)
 {
   if (debug) {
-    Serial.println(p);
+    Serial_println(p);
   }
 }
 
@@ -279,31 +279,31 @@ void printHex(uint8_t d, boolean upper)
   if (t > '9') {
     t += a - '9' - 1;
   }
-  Serial.print(t);
+  Serial_print(t);
   t = d & 0xF | '0';
   if (t > '9') {
     t += a - '9' - 1;
   }
-  Serial.print(t);
+  Serial_print(t);
 }
 
 void _printInput()
 {
   if (debug) {
     int buflen = RECV(0) & 0x7f;
-    Serial.print('>');
+    Serial_print('>');
     for (int i = 0; i <= buflen; i++) {
       if (i == 1 && isprint(RECV(1)) || i == 2 && RECV(1) != 0 && isprint(RECV(2))) {
         if (i == 1) {
-        Serial.print(' ');
+        Serial_print(' ');
         }
-        Serial.print((char) RECV(i));
+        Serial_print((char) RECV(i));
       } else {
-        Serial.print(' ');
+        Serial_print(' ');
         printHex(RECV(i), false);
       }
     }
-    Serial.println("");  
+    Serial_println("");  
   }
 }
 
@@ -314,7 +314,7 @@ void SendBufToCamera() {
   case SET_CAMERA_POWER_DOWN: // PW
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      Serial.println(F("PW00"));
+      Serial_println(F("PW00"));
     }
 #endif
     break;
@@ -324,10 +324,10 @@ void SendBufToCamera() {
       switch (buf[3]) {
       case 0:
       case 1:
-        Serial.print(F("SH"));
+        Serial_print(F("SH"));
         printHex(buf[3], true);
-        Serial.println("");
-        Serial.flush();
+        Serial_println("");
+        Serial_flush();
         delay(5);
         break;
       default:
@@ -343,9 +343,9 @@ void SendBufToCamera() {
   case SET_CAMERA_USBMODE:
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
-      Serial.print(F("UM"));  // Warn: UM is sent to Dongle but Dongle should not send it to Bacpac.
+      Serial_print(F("UM"));  // Warn: UM is sent to Dongle but Dongle should not send it to Bacpac.
       printHex(buf[3], true);
-      Serial.println("");
+      Serial_println("");
     }
 #endif
     waiting = true;
@@ -384,19 +384,19 @@ void SendBufToCamera() {
   }
   if (debug) {
     int buflen = buf[0] & 0x7f;
-    Serial.print('<');
+    Serial_print('<');
     for (int i = 0; i <= buflen; i++) {
       if (i == 1 && isprint(buf[1]) || i == 2 && buf[1] != 0 && isprint(buf[2])) {
         if (i == 1) {
-          Serial.print(' ');
+          Serial_print(' ');
         }
-        Serial.print((char) buf[i]);
+        Serial_print((char) buf[i]);
       } else {
-        Serial.print(' ');
+        Serial_print(' ');
         printHex(buf[i], false);
       }
     }
-    Serial.println("");
+    Serial_println("");
   }
 #if !defined(USE_I2C_PROXY)
   digitalWrite(I2CINT, LOW);
@@ -471,7 +471,7 @@ void checkCameraCommands()
         return;
       case '/':
         serialfirst = false;
-        Serial.println(F(MEWPRO_FIRMWARE_VERSION));
+        Serial_println(F(MEWPRO_FIRMWARE_VERSION));
         return;
       default:
         if (bufp >= 3 && isxdigit(c)) {

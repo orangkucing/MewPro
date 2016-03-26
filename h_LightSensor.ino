@@ -46,7 +46,7 @@ void checkLightSensor()
   if (val > maximum) {
     maximum = val;
     if (debug) {
-      Serial.println(maximum); // For debug
+      Serial_println(maximum); // For debug
     }
   }
 #endif

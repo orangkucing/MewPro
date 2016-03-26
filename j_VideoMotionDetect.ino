@@ -418,17 +418,17 @@ void checkVMD()
   for (int c = 0; c < MAX_SCANLINES; c++) {
     for (int i = 0; i < (1 << WORD_PER_LINE); i++) {
       for (int k = 0; k < SIZE_OF_IMAGE_T << 3; k++) {
-        Serial.print((image[(c << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0) + (image[(c + MAX_SCANLINES << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0));
+        Serial_print((image[(c << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0) + (image[(c + MAX_SCANLINES << WORD_PER_LINE) + i] & (1 << k) ? 1 : 0));
       }
     }
-    Serial.println("");
+    Serial_println("");
   }
-  Serial.println((uint16_t)diff);
-  Serial.println(F("--------"));
+  Serial_println((uint16_t)diff);
+  Serial_println(F("--------"));
 #else
   if (diff > differenceThreshold) { // Change Me!
 //  if (debug) {
-//      Serial.println((uint16_t)diff);
+//      Serial_println((uint16_t)diff);
 //  }
     __debug(F("move"));
     motionDetected();
@@ -447,5 +447,3 @@ void checkVMD()
 }
 
 #endif
-
-

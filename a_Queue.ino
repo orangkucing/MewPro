@@ -13,7 +13,7 @@ volatile int recvb = 0, recve = 0;
 
 boolean inputAvailable()
 {
-  if (!waiting && (queueb != queuee || Serial.available())) {
+  if (!waiting && (queueb != queuee || Serial_available())) {
     return true;
   }
   return false;
@@ -21,8 +21,8 @@ boolean inputAvailable()
 
 byte myRead()
 {
-  if (serialfirst && Serial.available()) {
-    return Serial.read();
+  if (serialfirst && Serial_available()) {
+    return Serial_read();
   }
   if (queueb != queuee) {
     byte c = queue[queueb];
@@ -31,7 +31,7 @@ byte myRead()
     return c;
   }
   serialfirst = true;
-  return Serial.read();
+  return Serial_read();
 }
 
 // Utility functions
@@ -73,7 +73,7 @@ void emptyQueue()
   bufp = 1;
   waiting = false;
   serialfirst = false;
-  while (Serial.available()) { // clear serial buffer
-    Serial.read();
+  while (Serial_available()) { // clear serial buffer
+    Serial_read();
   }
 }
