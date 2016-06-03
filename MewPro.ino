@@ -94,10 +94,10 @@ boolean debug = true;
 #error Please modify Arduino Wire library source code to increase the I2C buffer size
 #endif
 //
-// Teensy 3.0 or 3.1 or LC
+// Teensy 3.x or LC
 //#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ and __MKL26Z64__ are not defined ***
 //
-// ATtiny1634 core https://github.com/SpenceKonde/arduino-tiny-841
+// ATtiny1634 core is included in https://github.com/SpenceKonde/ATTinyCore
 //    WireS library is downloadable from https://github.com/orangkucing/WireS
 //#include <WireS.h> // *** please comment out this line if __AVR_ATtiny1634__ is not defined ***
 

@@ -57,7 +57,7 @@ const int PWRBTN           = A1;   // (19) Pulled up by camera
 //                           A4;   // (22)         (Arduino Pro Micro: No pin)
 //                           A5;   // (23)         (Arduino Pro Micro: No pin)
 //
-//    For ATtiny1634 core at https://github.com/SpenceKonde/arduino-tiny-841
+//    For ATtiny1634 core at https://github.com/SpenceKonde/ATTinyCore
 #elif defined(__AVR_ATtiny1634__) // for MewPro Cable
 //                           0;    // ADC                  (Used by Serial port TXO)
 //                           1;    // ADC                  (Used by Serial port RXI)
