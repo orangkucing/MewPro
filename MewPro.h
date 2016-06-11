@@ -48,7 +48,8 @@ const int I2CINT           = 10;   // (28 | A10)
 const int TRIG             = MOSI; // (16)
 const int BPRDY            = MISO; // (14) Pulled up by camera
 //                           SCK;  // (15) (Not in use)
-//                           SS;   // (17) RXLED   (Arduino Pro Micro: No pin)
+//                           SS;   // (17) RXLED No pin
+//                                 // (30) TXLED No pin
 const int HBUSRDY          = A0;   // (18)
 const int PWRBTN           = A1;   // (19) Pulled up by camera
 // END Don't change.
