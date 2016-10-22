@@ -72,7 +72,7 @@ boolean debug = true;
 // Time and TimeAlarms libraries are downloadable from
 //   http://www.pjrc.com/teensy/td_libs_Time.html
 //   and http://www.pjrc.com/teensy/td_libs_TimeAlarms.html
-//#include <Time.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
+//#include <TimeLib.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
 //#include <TimeAlarms.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
 
 //********************************************************
