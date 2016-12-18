@@ -91,6 +91,7 @@ void bacpacCommand()
       case MODE_VIDEO:
       case MODE_BURST:
       case MODE_PHOTO:
+      case MODE_DUAL:
         stopGenlock();
         ledOff();
         break;
