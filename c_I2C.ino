@@ -123,8 +123,12 @@ void roleChange()
   pinMode(BPRDY, INPUT);
   delay(1000);
 
+#ifdef USE_GENLOCK
+  id = ID_MASTER;
+#else
   id = isMaster() ? ID_SLAVE : ID_MASTER;
-  
+#endif
+ 
   WIRE.begin();
   for (unsigned int a = 0; a < 16; a += PAGESIZE) {
     WIRE.beginTransmission(I2CEEPROM);
@@ -237,10 +241,17 @@ boolean isMaster()
 {
   if (eepromId == 0) {
     eepromId = EEPROM.read(EEPROMOFFSET);
+#ifdef USE_GENLOCK
+    if (eepromId != ID_MASTER) {
+      __romWrite(ID_MASTER);
+      eepromId = ID_MASTER;
+    }
+#else
     if (eepromId != ID_MASTER && eepromId != ID_SLAVE) {
       __romWrite(ID_MASTER);
       eepromId = ID_MASTER;
     }
+#endif
     resetI2C();
   }
   return (eepromId == ID_MASTER);
@@ -254,7 +265,11 @@ void roleChange()
   pinMode(BPRDY, INPUT);
   delay(1000);
 
+#ifdef USE_GENLOCK
+  id = ID_MASTER;
+#else
   id = isMaster() ? ID_SLAVE : ID_MASTER;
+#endif
   __romWrite(id);
   pinMode(BPRDY, OUTPUT);
   eepromId = id;
