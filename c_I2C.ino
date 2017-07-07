@@ -339,7 +339,11 @@ void SendBufToCamera() {
       switch (buf[3]) {
       case 0:
       case 1:
+#ifdef USE_DONGLE
         Serial_print(F("SH"));
+#else // use with Iliad or Bastet
+        Serial_print(F("SY"));
+#endif
         printHex(buf[3], true);
         Serial_println("");
         Serial_flush();

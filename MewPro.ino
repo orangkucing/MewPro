@@ -50,7 +50,7 @@ END copy */
 //   Copyright (c) 2014-2016 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2017011101"
+#define MEWPRO_FIRMWARE_VERSION "2017070701"
 
 //
 #include <Arduino.h>
@@ -138,6 +138,7 @@ boolean debug = true;
 // k_Genlock: Generator Lock
 //   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
 #undef  USE_GENLOCK
+#define USE_DONGLE // undef if using Iliad or Bastet
 
 //********************************************************
 // l_TurnedOn: 7-segment display to monitor camera's status
